@@ -220,6 +220,8 @@ The following clarifications from the spec session are integrated into this plan
   - Factory: `empty()`, `of(String, Object)`, `of(Map<String, Object>)`
   - `get(String fieldName)` — case-sensitive lookup,
     throws `ExpressionEvaluationException` if absent
+  - `of()` factories MUST reject `null` values at construction time →
+    `ExpressionEvaluationException`: `"Field value must not be null for field: '<fieldName>'"`
 - [ ] Create `ru.zahaand.dataexpr.function.BuiltinFunctionRegistry`:
   - Package-private utility class, `private` no-arg constructor
   - 7 functions: `abs`, `round`, `floor`, `ceil`, `min`, `max`, `pow`
@@ -246,6 +248,8 @@ The following clarifications from the spec session are integrated into this plan
     throws `ExpressionEvaluationException` on string operands
   - **Equality operators** (`==`, `!=`): support both numeric and string operands;
     mixed-type `==` → `false`, mixed-type `!=` → `true`
+  - **Boolean-in-arithmetic**: `Boolean` values (field or `BooleanNode`) in arithmetic
+    context → throws `ExpressionEvaluationException`. No `true → 1` coercion.
   - Division by zero → `ExpressionEvaluationException`
   - NaN / Infinity → propagate silently (match `java.lang.Math` semantics)
   - `IN` / `NOT IN`: compares field value against each list value using `.equals()`
@@ -259,6 +263,7 @@ The following clarifications from the spec session are integrated into this plan
   - `parse(String)` → `Expression` — new `AstBuildingVisitor` per call
   - Throws `ExpressionParseException` on null, blank, or syntax error
   - ANTLR error listener: replace default with one that throws `ExpressionParseException`
+    with message format: `"Parse error at line <L>:<C>: <antlr_message>"`
   - `evaluate(String, EvaluationContext)` → `EvaluationResult`
   - `evaluateBoolean(String, EvaluationContext)` → `boolean` —
     throws `ExpressionEvaluationException` if result is not `BooleanResult`
@@ -291,7 +296,7 @@ The following clarifications from the spec session are integrated into this plan
     - `shouldReturnInNodeWithNegatedTrueForNotIn`
     - `shouldHandleFieldNamesWithSpaces`
     - `shouldHandleRightAssociativityForPower`
-  - `EvaluateBoolean` (8 test methods — boolean result assertions):
+  - `EvaluateBoolean` (10 test methods — boolean result assertions):
     - `shouldReturnTrueWhenFieldGreaterThanLiteral`
     - `shouldReturnFalseWhenFieldNotMatchingString`
     - `shouldEvaluateAndExpression`
@@ -300,11 +305,16 @@ The following clarifications from the spec session are integrated into this plan
     - `shouldEvaluateInExpression`
     - `shouldEvaluateNotInExpression`
     - `shouldEvaluateComplexCondition`
-  - `EvaluateDouble` (3 test methods — numeric result assertions):
+    - `shouldReturnFalseWhenEqualityComparesFieldOfDifferentTypes`
+    - `shouldReturnTrueWhenInequalityComparesFieldOfDifferentTypes`
+  - `EvaluateDouble` (6 test methods — numeric result assertions):
     - `shouldEvaluateArithmeticOverFields`
     - `shouldEvaluateFunctionCall`
     - `shouldEvaluateModuloOperator`
-  - `Errors` (9 test methods — exception assertions):
+    - `shouldCoerceIntegerFieldToDouble`
+    - `shouldCoerceLongFieldToDouble`
+    - `shouldCoerceBigDecimalFieldToDouble`
+  - `Errors` (12 test methods — exception assertions):
     - `shouldThrowParseExceptionWhenExpressionIsMalformed`
     - `shouldThrowParseExceptionWhenInputIsNull`
     - `shouldThrowParseExceptionWhenInputIsBlank`
@@ -314,6 +324,9 @@ The following clarifications from the spec session are integrated into this plan
     - `shouldThrowEvaluationExceptionWhenArithmeticOnStringField`
     - `shouldThrowEvaluationExceptionWhenEvaluateBooleanCalledOnDoubleResult`
     - `shouldThrowEvaluationExceptionWhenEvaluateDoubleCalledOnBooleanResult`
+    - `shouldThrowEvaluationExceptionWhenOrderingOperatorAppliedToStringOperands`
+    - `shouldThrowEvaluationExceptionWhenBooleanUsedInArithmetic`
+    - `shouldThrowEvaluationExceptionWhenNullValueInContext`
 - [ ] Create `EvaluationContextTest` (4 test methods):
   - `shouldReturnValueWhenFieldIsPresent`
   - `shouldThrowWhenFieldIsAbsent`

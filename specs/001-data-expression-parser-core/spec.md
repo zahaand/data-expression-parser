@@ -192,6 +192,9 @@ the starter dependency and verifying that `DataExpressionParser` is injectable a
 - Parenthesized expressions are supported for grouping but not for tuples or multi-value
   returns.
 - The library does not perform any I/O — it is a pure computation library.
+- Expression depth and length are not limited in v1.0.0. The library is intended
+  for developer-controlled business expressions. Pathological inputs (e.g. thousands
+  of nested parentheses) may cause `StackOverflowError` and are out of scope.
 
 ---
 
@@ -482,6 +485,11 @@ public final class EvaluationContext {
 
 Field names in `EvaluationContext` are case-sensitive.
 
+`of(String, Object)` and `of(Map<String, Object>)` MUST reject `null` values
+by throwing `ExpressionEvaluationException` with message:
+`"Field value must not be null for field: '<fieldName>'"`.
+`empty()` is always valid.
+
 #### `DataExpressionParser`
 ```java
 package ru.zahaand.dataexpr.parser;
@@ -537,6 +545,10 @@ public final class ExpressionEvaluator {
 - Field names MUST have surrounding brackets stripped:
   `[first name]` → `FieldNode("first name")`.
 - This class is package-private — not part of the public API.
+- Parse error format: `ExpressionParseException` message MUST include
+  the ANTLR position in the format:
+  `"Parse error at line <L>:<C>: <antlr_message>"`
+  Example: `"Parse error at line 1:5: mismatched input '>' expecting {...}"`
 
 #### `EvaluatingVisitor`
 - Uses `switch` pattern matching on the sealed `Expression` interface.
@@ -544,6 +556,10 @@ public final class ExpressionEvaluator {
   (`Integer`, `Long`, `BigDecimal`, etc.) is coerced to `double` via `Number.doubleValue()`.
   If a field resolves to a non-numeric value in an arithmetic context →
   throws `ExpressionEvaluationException`.
+- Boolean values in arithmetic context (`BooleanNode` or a field resolving to
+  `Boolean`) MUST throw `ExpressionEvaluationException`.
+  Example: `[is_active] + 1` where `is_active = true` → throws.
+  No Java-style `true → 1` coercion is performed.
 - Comparison `==` and `!=` support both numeric and string operands.
   Mixed-type comparison (e.g., number vs string): `==` returns `false`, `!=` returns `true`.
 - Ordering operators (`>`, `<`, `>=`, `<=`) are numeric-only. If either operand
@@ -668,11 +684,16 @@ All tests reside in `data-expression-parser-core/src/test/java/ru/zahaand/dataex
   - `shouldEvaluateInExpression`
   - `shouldEvaluateNotInExpression`
   - `shouldEvaluateComplexCondition` — e.g. `[age] > 18 AND [status] == 'active'`
+  - `shouldReturnFalseWhenEqualityComparesFieldOfDifferentTypes` — e.g. `[age] == 'thirty'` where `age = 25.0` → `false`
+  - `shouldReturnTrueWhenInequalityComparesFieldOfDifferentTypes` — e.g. `[age] != 'thirty'` where `age = 25.0` → `true`
 
 - `EvaluateDouble` — verifies numeric results:
   - `shouldEvaluateArithmeticOverFields`
   - `shouldEvaluateFunctionCall`
   - `shouldEvaluateModuloOperator`
+  - `shouldCoerceIntegerFieldToDouble` — context contains `Integer` value; arithmetic returns correct `double`
+  - `shouldCoerceLongFieldToDouble` — context contains `Long` value; arithmetic returns correct `double`
+  - `shouldCoerceBigDecimalFieldToDouble` — context contains `BigDecimal` value; arithmetic returns correct `double`
 
 - `Errors` — verifies exception throwing:
   - `shouldThrowParseExceptionWhenExpressionIsMalformed`
@@ -684,6 +705,9 @@ All tests reside in `data-expression-parser-core/src/test/java/ru/zahaand/dataex
   - `shouldThrowEvaluationExceptionWhenArithmeticOnStringField`
   - `shouldThrowEvaluationExceptionWhenEvaluateBooleanCalledOnDoubleResult`
   - `shouldThrowEvaluationExceptionWhenEvaluateDoubleCalledOnBooleanResult`
+  - `shouldThrowEvaluationExceptionWhenOrderingOperatorAppliedToStringOperands` — e.g. `[name] > 'Alice'` where `name = "Bob"` → throws
+  - `shouldThrowEvaluationExceptionWhenBooleanUsedInArithmetic` — e.g. `[flag] + 1` where `flag = true` → throws
+  - `shouldThrowEvaluationExceptionWhenNullValueInContext` — `EvaluationContext.of("age", null)` → throws
 
 #### `EvaluationContextTest`
 - `shouldReturnValueWhenFieldIsPresent`
