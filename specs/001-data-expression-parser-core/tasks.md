@@ -28,10 +28,10 @@
 
 **Purpose**: Both modules compile with no Java source files. `mvn compile` passes.
 
-- [ ] T001 Create parent `pom.xml` with groupId `ru.zahaand`, artifactId `data-expression-parser`, version `1.0.0`, packaging `pom`, child modules, dependencyManagement (ANTLR4 4.13.2, commons-lang3, Spring Boot BOM 3.5.0, JUnit Jupiter, AssertJ, Mockito), and Java 21 compiler settings
-- [ ] T002 [P] Create `data-expression-parser-core/pom.xml` with parent reference, dependencies (antlr4-runtime, commons-lang3, junit-jupiter, assertj-core, mockito-core), and antlr4-maven-plugin configuration
-- [ ] T003 [P] Create `data-expression-parser-spring-boot-starter/pom.xml` with parent reference and dependencies (data-expression-parser-core, spring-boot-autoconfigure, spring-boot-starter)
-- [ ] T004 Verify `mvn compile` passes with no errors in both modules
+- [x] T001 Create parent `pom.xml` with groupId `ru.zahaand`, artifactId `data-expression-parser`, version `1.0.0`, packaging `pom`, child modules, dependencyManagement (ANTLR4 4.13.2, commons-lang3, Spring Boot BOM 3.5.0, JUnit Jupiter, AssertJ, Mockito), and Java 21 compiler settings
+- [x] T002 [P] Create `data-expression-parser-core/pom.xml` with parent reference, dependencies (antlr4-runtime, commons-lang3, junit-jupiter, assertj-core, mockito-core), and antlr4-maven-plugin configuration
+- [x] T003 [P] Create `data-expression-parser-spring-boot-starter/pom.xml` with parent reference and dependencies (data-expression-parser-core, spring-boot-autoconfigure, spring-boot-starter)
+- [x] T004 Verify `mvn compile` passes with no errors in both modules
 
 **Commit**: `feat(core): add Maven module skeleton`
 
@@ -45,36 +45,36 @@
 
 ### ANTLR Grammar
 
-- [ ] T005 Create ANTLR grammar in `data-expression-parser-core/src/main/antlr4/ru/zahaand/dataexpr/DataExpression.g4` with entry rule, logical/comparison/arithmetic layers, lexer rules (reserved words above ID), FIELD/STRING/NUMBER/ID/STAR/WS tokens per spec
-- [ ] T006 Verify `mvn generate-sources` generates `DataExpressionLexer.java` and `DataExpressionParser.java` under `target/generated-sources/antlr4/ru/zahaand/dataexpr/`
+- [x] T005 Create ANTLR grammar in `data-expression-parser-core/src/main/antlr4/ru/zahaand/dataexpr/DataExpression.g4` with entry rule, logical/comparison/arithmetic layers, lexer rules (reserved words above ID), FIELD/STRING/NUMBER/ID/STAR/WS tokens per spec
+- [x] T006 Verify `mvn generate-sources` generates `DataExpressionLexer.java` and `DataExpressionParser.java` under `target/generated-sources/antlr4/ru/zahaand/dataexpr/`
 
 **Commit**: `feat(core): add ANTLR grammar DataExpression.g4`
 
 ### AST Node Types
 
-- [ ] T007 Create sealed interface `Expression` in `data-expression-parser-core/src/main/java/ru/zahaand/dataexpr/ast/Expression.java` permitting all 11 node types
-- [ ] T008 [P] Create record `FieldNode(String fieldName)` in `data-expression-parser-core/src/main/java/ru/zahaand/dataexpr/ast/FieldNode.java`
-- [ ] T009 [P] Create record `NumberNode(double value)` in `data-expression-parser-core/src/main/java/ru/zahaand/dataexpr/ast/NumberNode.java`
-- [ ] T010 [P] Create record `StringNode(String value)` in `data-expression-parser-core/src/main/java/ru/zahaand/dataexpr/ast/StringNode.java`
-- [ ] T011 [P] Create record `BooleanNode(boolean value)` in `data-expression-parser-core/src/main/java/ru/zahaand/dataexpr/ast/BooleanNode.java`
-- [ ] T012 [P] Create enum `ArithmeticOperator` (ADD, SUBTRACT, MULTIPLY, DIVIDE, MODULO, POWER) in `data-expression-parser-core/src/main/java/ru/zahaand/dataexpr/ast/ArithmeticOperator.java`
-- [ ] T013 [P] Create enum `ComparisonOperator` (GT, LT, GTE, LTE, EQ, NEQ) in `data-expression-parser-core/src/main/java/ru/zahaand/dataexpr/ast/ComparisonOperator.java`
-- [ ] T014 [P] Create enum `LogicalOperator` (AND, OR) in `data-expression-parser-core/src/main/java/ru/zahaand/dataexpr/ast/LogicalOperator.java`
-- [ ] T015 [P] Create record `BinaryOpNode(Expression left, ArithmeticOperator op, Expression right)` in `data-expression-parser-core/src/main/java/ru/zahaand/dataexpr/ast/BinaryOpNode.java`
-- [ ] T016 [P] Create record `UnaryMinusNode(Expression operand)` in `data-expression-parser-core/src/main/java/ru/zahaand/dataexpr/ast/UnaryMinusNode.java`
-- [ ] T017 [P] Create record `FunctionCallNode(String name, List<Expression> args)` in `data-expression-parser-core/src/main/java/ru/zahaand/dataexpr/ast/FunctionCallNode.java`
-- [ ] T018 [P] Create record `ComparisonNode(Expression left, ComparisonOperator op, Expression right)` in `data-expression-parser-core/src/main/java/ru/zahaand/dataexpr/ast/ComparisonNode.java`
-- [ ] T019 [P] Create record `LogicalNode(Expression left, LogicalOperator op, Expression right)` in `data-expression-parser-core/src/main/java/ru/zahaand/dataexpr/ast/LogicalNode.java`
-- [ ] T020 [P] Create record `NotNode(Expression operand)` in `data-expression-parser-core/src/main/java/ru/zahaand/dataexpr/ast/NotNode.java`
-- [ ] T021 [P] Create record `InNode(Expression field, List<Expression> values, boolean negated)` in `data-expression-parser-core/src/main/java/ru/zahaand/dataexpr/ast/InNode.java`
+- [x] T007 Create sealed interface `Expression` in `data-expression-parser-core/src/main/java/ru/zahaand/dataexpr/ast/Expression.java` permitting all 11 node types
+- [x] T008 [P] Create record `FieldNode(String fieldName)` in `data-expression-parser-core/src/main/java/ru/zahaand/dataexpr/ast/FieldNode.java`
+- [x] T009 [P] Create record `NumberNode(double value)` in `data-expression-parser-core/src/main/java/ru/zahaand/dataexpr/ast/NumberNode.java`
+- [x] T010 [P] Create record `StringNode(String value)` in `data-expression-parser-core/src/main/java/ru/zahaand/dataexpr/ast/StringNode.java`
+- [x] T011 [P] Create record `BooleanNode(boolean value)` in `data-expression-parser-core/src/main/java/ru/zahaand/dataexpr/ast/BooleanNode.java`
+- [x] T012 [P] Create enum `ArithmeticOperator` (ADD, SUBTRACT, MULTIPLY, DIVIDE, MODULO, POWER) in `data-expression-parser-core/src/main/java/ru/zahaand/dataexpr/ast/ArithmeticOperator.java`
+- [x] T013 [P] Create enum `ComparisonOperator` (GT, LT, GTE, LTE, EQ, NEQ) in `data-expression-parser-core/src/main/java/ru/zahaand/dataexpr/ast/ComparisonOperator.java`
+- [x] T014 [P] Create enum `LogicalOperator` (AND, OR) in `data-expression-parser-core/src/main/java/ru/zahaand/dataexpr/ast/LogicalOperator.java`
+- [x] T015 [P] Create record `BinaryOpNode(Expression left, ArithmeticOperator op, Expression right)` in `data-expression-parser-core/src/main/java/ru/zahaand/dataexpr/ast/BinaryOpNode.java`
+- [x] T016 [P] Create record `UnaryMinusNode(Expression operand)` in `data-expression-parser-core/src/main/java/ru/zahaand/dataexpr/ast/UnaryMinusNode.java`
+- [x] T017 [P] Create record `FunctionCallNode(String name, List<Expression> args)` in `data-expression-parser-core/src/main/java/ru/zahaand/dataexpr/ast/FunctionCallNode.java`
+- [x] T018 [P] Create record `ComparisonNode(Expression left, ComparisonOperator op, Expression right)` in `data-expression-parser-core/src/main/java/ru/zahaand/dataexpr/ast/ComparisonNode.java`
+- [x] T019 [P] Create record `LogicalNode(Expression left, LogicalOperator op, Expression right)` in `data-expression-parser-core/src/main/java/ru/zahaand/dataexpr/ast/LogicalNode.java`
+- [x] T020 [P] Create record `NotNode(Expression operand)` in `data-expression-parser-core/src/main/java/ru/zahaand/dataexpr/ast/NotNode.java`
+- [x] T021 [P] Create record `InNode(Expression field, List<Expression> values, boolean negated)` in `data-expression-parser-core/src/main/java/ru/zahaand/dataexpr/ast/InNode.java`
 
 **Commit**: `feat(core): add AST node types`
 
 ### Exception Types
 
-- [ ] T022 [P] Create `ExpressionParseException` (RuntimeException, two constructors) in `data-expression-parser-core/src/main/java/ru/zahaand/dataexpr/exception/ExpressionParseException.java`
-- [ ] T023 [P] Create `ExpressionEvaluationException` (RuntimeException, two constructors) in `data-expression-parser-core/src/main/java/ru/zahaand/dataexpr/exception/ExpressionEvaluationException.java`
-- [ ] T024 Verify `mvn compile` passes
+- [x] T022 [P] Create `ExpressionParseException` (RuntimeException, two constructors) in `data-expression-parser-core/src/main/java/ru/zahaand/dataexpr/exception/ExpressionParseException.java`
+- [x] T023 [P] Create `ExpressionEvaluationException` (RuntimeException, two constructors) in `data-expression-parser-core/src/main/java/ru/zahaand/dataexpr/exception/ExpressionEvaluationException.java`
+- [x] T024 Verify `mvn compile` passes
 
 **Commit**: `feat(core): add exception types`
 
@@ -90,14 +90,14 @@
 
 ### Implementation for User Story 1
 
-- [ ] T025 [US1] Create package-private `AstBuildingVisitor` extending `DataExpressionBaseVisitor<Expression>` in `data-expression-parser-core/src/main/java/ru/zahaand/dataexpr/visitor/AstBuildingVisitor.java` — handle bracket stripping for fields, quote stripping for strings, right-associative power, NOT IN detection, all operator mappings, and ANTLR error listener throwing `ExpressionParseException` with format `"Parse error at line <L>:<C>: <antlr_message>"`
-- [ ] T026 [US1] Create `DataExpressionParser` (final class) in `data-expression-parser-core/src/main/java/ru/zahaand/dataexpr/parser/DataExpressionParser.java` — constructor accepts `ExpressionEvaluator`, `parse(String)` creates new `AstBuildingVisitor` per call, throws `ExpressionParseException` on null/blank/syntax error. Add placeholder `evaluate`, `evaluateBoolean`, `evaluateDouble` methods that delegate to evaluator (to be implemented in US2/US3)
+- [x] T025 [US1] Create package-private `AstBuildingVisitor` extending `DataExpressionBaseVisitor<Expression>` in `data-expression-parser-core/src/main/java/ru/zahaand/dataexpr/visitor/AstBuildingVisitor.java` — handle bracket stripping for fields, quote stripping for strings, right-associative power, NOT IN detection, all operator mappings, and ANTLR error listener throwing `ExpressionParseException` with format `"Parse error at line <L>:<C>: <antlr_message>"`
+- [x] T026 [US1] Create `DataExpressionParser` (final class) in `data-expression-parser-core/src/main/java/ru/zahaand/dataexpr/parser/DataExpressionParser.java` — constructor accepts `ExpressionEvaluator`, `parse(String)` creates new `AstBuildingVisitor` per call, throws `ExpressionParseException` on null/blank/syntax error. Add placeholder `evaluate`, `evaluateBoolean`, `evaluateDouble` methods that delegate to evaluator (to be implemented in US2/US3)
 
 ### Tests for User Story 1
 
-- [ ] T027 [US1] Create `DataExpressionParserTest` with `@Nested` `Parse` group (15 tests) in `data-expression-parser-core/src/test/java/ru/zahaand/dataexpr/DataExpressionParserTest.java` — tests: shouldReturnFieldNodeWhenExpressionIsFieldReference, shouldReturnNumberNodeWhenExpressionIsNumericLiteral, shouldReturnStringNodeWhenExpressionIsStringLiteral, shouldReturnBooleanNodeWhenExpressionIsTrueLiteral, shouldReturnBooleanNodeWhenExpressionIsFalseLiteral, shouldParseTrueAndFalseCaseInsensitively (@ParameterizedTest), shouldReturnBinaryOpNodeForArithmetic, shouldRespectArithmeticPrecedence, shouldReturnComparisonNodeForGreaterThan, shouldReturnLogicalNodeForAndExpression, shouldReturnNotNodeForNotExpression, shouldReturnInNodeForInExpression, shouldReturnInNodeWithNegatedTrueForNotIn, shouldHandleFieldNamesWithSpaces, shouldHandleRightAssociativityForPower
-- [ ] T028 [US1] Add `@Nested` `Errors` group with parse-related tests (3 tests) to `DataExpressionParserTest` — shouldThrowParseExceptionWhenExpressionIsMalformed, shouldThrowParseExceptionWhenInputIsNull, shouldThrowParseExceptionWhenInputIsBlank
-- [ ] T029 [US1] Verify `mvn test` passes for all Parse and parse-related Errors tests
+- [x] T027 [US1] Create `DataExpressionParserTest` with `@Nested` `Parse` group (15 tests) in `data-expression-parser-core/src/test/java/ru/zahaand/dataexpr/DataExpressionParserTest.java` — tests: shouldReturnFieldNodeWhenExpressionIsFieldReference, shouldReturnNumberNodeWhenExpressionIsNumericLiteral, shouldReturnStringNodeWhenExpressionIsStringLiteral, shouldReturnBooleanNodeWhenExpressionIsTrueLiteral, shouldReturnBooleanNodeWhenExpressionIsFalseLiteral, shouldParseTrueAndFalseCaseInsensitively (@ParameterizedTest), shouldReturnBinaryOpNodeForArithmetic, shouldRespectArithmeticPrecedence, shouldReturnComparisonNodeForGreaterThan, shouldReturnLogicalNodeForAndExpression, shouldReturnNotNodeForNotExpression, shouldReturnInNodeForInExpression, shouldReturnInNodeWithNegatedTrueForNotIn, shouldHandleFieldNamesWithSpaces, shouldHandleRightAssociativityForPower
+- [x] T028 [US1] Add `@Nested` `Errors` group with parse-related tests (3 tests) to `DataExpressionParserTest` — shouldThrowParseExceptionWhenExpressionIsMalformed, shouldThrowParseExceptionWhenInputIsNull, shouldThrowParseExceptionWhenInputIsBlank
+- [x] T029 [US1] Verify `mvn test` passes for all Parse and parse-related Errors tests
 
 **Commit**: `feat(core): add parsing pipeline and parse tests`
 
@@ -113,20 +113,20 @@
 
 ### Implementation for User Story 2
 
-- [ ] T030 [P] [US2] Create sealed interface `EvaluationResult` in `data-expression-parser-core/src/main/java/ru/zahaand/dataexpr/evaluator/EvaluationResult.java` permitting `DoubleResult` and `BooleanResult`
-- [ ] T031 [P] [US2] Create record `DoubleResult(double value)` in `data-expression-parser-core/src/main/java/ru/zahaand/dataexpr/evaluator/DoubleResult.java`
-- [ ] T032 [P] [US2] Create record `BooleanResult(boolean value)` in `data-expression-parser-core/src/main/java/ru/zahaand/dataexpr/evaluator/BooleanResult.java`
-- [ ] T033 [P] [US2] Create `EvaluationContext` (final class) in `data-expression-parser-core/src/main/java/ru/zahaand/dataexpr/evaluator/EvaluationContext.java` — defensive copy in constructor, factories `empty()`, `of(String, Object)`, `of(Map<String, Object>)`, case-sensitive `get()` throwing `ExpressionEvaluationException` if absent, null value rejection at construction time
-- [ ] T034 [US2] Create package-private `EvaluatingVisitor` in `data-expression-parser-core/src/main/java/ru/zahaand/dataexpr/visitor/EvaluatingVisitor.java` — switch pattern matching on sealed Expression, numeric coercion via `Number.doubleValue()`, ordering operators numeric-only, mixed-type equality semantics, boolean-in-arithmetic throws, division by zero throws, NaN/Infinity propagates, IN/NOT IN via `.equals()`, function delegation to `BuiltinFunctionRegistry`
-- [ ] T035 [US2] Create `ExpressionEvaluator` (final class) in `data-expression-parser-core/src/main/java/ru/zahaand/dataexpr/evaluator/ExpressionEvaluator.java` — `evaluate(Expression, EvaluationContext)` delegates to `EvaluatingVisitor`
-- [ ] T036 [US2] Wire `evaluate()` and `evaluateBoolean()` methods in `data-expression-parser-core/src/main/java/ru/zahaand/dataexpr/parser/DataExpressionParser.java` — `evaluateBoolean` throws `ExpressionEvaluationException` if result is not `BooleanResult`
+- [x] T030 [P] [US2] Create sealed interface `EvaluationResult` in `data-expression-parser-core/src/main/java/ru/zahaand/dataexpr/evaluator/EvaluationResult.java` permitting `DoubleResult` and `BooleanResult`
+- [x] T031 [P] [US2] Create record `DoubleResult(double value)` in `data-expression-parser-core/src/main/java/ru/zahaand/dataexpr/evaluator/DoubleResult.java`
+- [x] T032 [P] [US2] Create record `BooleanResult(boolean value)` in `data-expression-parser-core/src/main/java/ru/zahaand/dataexpr/evaluator/BooleanResult.java`
+- [x] T033 [P] [US2] Create `EvaluationContext` (final class) in `data-expression-parser-core/src/main/java/ru/zahaand/dataexpr/evaluator/EvaluationContext.java` — defensive copy in constructor, factories `empty()`, `of(String, Object)`, `of(Map<String, Object>)`, case-sensitive `get()` throwing `ExpressionEvaluationException` if absent, null value rejection at construction time
+- [x] T034 [US2] Create package-private `EvaluatingVisitor` in `data-expression-parser-core/src/main/java/ru/zahaand/dataexpr/visitor/EvaluatingVisitor.java` — switch pattern matching on sealed Expression, numeric coercion via `Number.doubleValue()`, ordering operators numeric-only, mixed-type equality semantics, boolean-in-arithmetic throws, division by zero throws, NaN/Infinity propagates, IN/NOT IN via `.equals()`, function delegation to `BuiltinFunctionRegistry`
+- [x] T035 [US2] Create `ExpressionEvaluator` (final class) in `data-expression-parser-core/src/main/java/ru/zahaand/dataexpr/evaluator/ExpressionEvaluator.java` — `evaluate(Expression, EvaluationContext)` delegates to `EvaluatingVisitor`
+- [x] T036 [US2] Wire `evaluate()` and `evaluateBoolean()` methods in `data-expression-parser-core/src/main/java/ru/zahaand/dataexpr/parser/DataExpressionParser.java` — `evaluateBoolean` throws `ExpressionEvaluationException` if result is not `BooleanResult`
 
 ### Tests for User Story 2
 
-- [ ] T037 [P] [US2] Create `EvaluationContextTest` (4 tests) in `data-expression-parser-core/src/test/java/ru/zahaand/dataexpr/EvaluationContextTest.java` — shouldReturnValueWhenFieldIsPresent, shouldThrowWhenFieldIsAbsent, shouldBeCaseSensitiveForFieldNames, shouldCreateEmptyContext
-- [ ] T038 [US2] Add `@Nested` `EvaluateBoolean` group (10 tests) to `DataExpressionParserTest` — shouldReturnTrueWhenFieldGreaterThanLiteral, shouldReturnFalseWhenFieldNotMatchingString, shouldEvaluateAndExpression, shouldEvaluateOrExpression, shouldEvaluateNotExpression, shouldEvaluateInExpression, shouldEvaluateNotInExpression, shouldEvaluateComplexCondition, shouldReturnFalseWhenEqualityComparesFieldOfDifferentTypes, shouldReturnTrueWhenInequalityComparesFieldOfDifferentTypes
-- [ ] T039 [US2] Add evaluation-related error tests (8 tests) to `@Nested` `Errors` group in `DataExpressionParserTest` — shouldThrowEvaluationExceptionWhenFieldNotInContext, shouldThrowEvaluationExceptionWhenDivisionByZero, shouldThrowEvaluationExceptionWhenUnknownFunction, shouldThrowEvaluationExceptionWhenArithmeticOnStringField, shouldThrowEvaluationExceptionWhenEvaluateBooleanCalledOnDoubleResult, shouldThrowEvaluationExceptionWhenOrderingOperatorAppliedToStringOperands, shouldThrowEvaluationExceptionWhenBooleanUsedInArithmetic, shouldThrowEvaluationExceptionWhenNullValueInContext
-- [ ] T040 [US2] Verify `mvn test` passes for all EvaluateBoolean, EvaluationContext, and evaluation Errors tests
+- [x] T037 [P] [US2] Create `EvaluationContextTest` (4 tests) in `data-expression-parser-core/src/test/java/ru/zahaand/dataexpr/EvaluationContextTest.java` — shouldReturnValueWhenFieldIsPresent, shouldThrowWhenFieldIsAbsent, shouldBeCaseSensitiveForFieldNames, shouldCreateEmptyContext
+- [x] T038 [US2] Add `@Nested` `EvaluateBoolean` group (10 tests) to `DataExpressionParserTest` — shouldReturnTrueWhenFieldGreaterThanLiteral, shouldReturnFalseWhenFieldNotMatchingString, shouldEvaluateAndExpression, shouldEvaluateOrExpression, shouldEvaluateNotExpression, shouldEvaluateInExpression, shouldEvaluateNotInExpression, shouldEvaluateComplexCondition, shouldReturnFalseWhenEqualityComparesFieldOfDifferentTypes, shouldReturnTrueWhenInequalityComparesFieldOfDifferentTypes
+- [x] T039 [US2] Add evaluation-related error tests (8 tests) to `@Nested` `Errors` group in `DataExpressionParserTest` — shouldThrowEvaluationExceptionWhenFieldNotInContext, shouldThrowEvaluationExceptionWhenDivisionByZero, shouldThrowEvaluationExceptionWhenUnknownFunction, shouldThrowEvaluationExceptionWhenArithmeticOnStringField, shouldThrowEvaluationExceptionWhenEvaluateBooleanCalledOnDoubleResult, shouldThrowEvaluationExceptionWhenOrderingOperatorAppliedToStringOperands, shouldThrowEvaluationExceptionWhenBooleanUsedInArithmetic, shouldThrowEvaluationExceptionWhenNullValueInContext
+- [x] T040 [US2] Verify `mvn test` passes for all EvaluateBoolean, EvaluationContext, and evaluation Errors tests
 
 **Commit**: `feat(core): add evaluation pipeline and boolean evaluation tests`
 
@@ -142,15 +142,15 @@
 
 ### Implementation for User Story 3
 
-- [ ] T041 [US3] Create package-private `BuiltinFunctionRegistry` in `data-expression-parser-core/src/main/java/ru/zahaand/dataexpr/function/BuiltinFunctionRegistry.java` — private constructor, 7 functions (abs, round, floor, ceil, min, max, pow), case-insensitive lookup via `toLowerCase()`, wrong arity and unknown function exceptions per spec
-- [ ] T042 [US3] Wire `evaluateDouble()` method in `data-expression-parser-core/src/main/java/ru/zahaand/dataexpr/parser/DataExpressionParser.java` — throws `ExpressionEvaluationException` if result is not `DoubleResult`
+- [x] T041 [US3] Create package-private `BuiltinFunctionRegistry` in `data-expression-parser-core/src/main/java/ru/zahaand/dataexpr/function/BuiltinFunctionRegistry.java` — private constructor, 7 functions (abs, round, floor, ceil, min, max, pow), case-insensitive lookup via `toLowerCase()`, wrong arity and unknown function exceptions per spec
+- [x] T042 [US3] Wire `evaluateDouble()` method in `data-expression-parser-core/src/main/java/ru/zahaand/dataexpr/parser/DataExpressionParser.java` — throws `ExpressionEvaluationException` if result is not `DoubleResult`
 
 ### Tests for User Story 3
 
-- [ ] T043 [P] [US3] Create `BuiltinFunctionRegistryTest` in `data-expression-parser-core/src/test/java/ru/zahaand/dataexpr/BuiltinFunctionRegistryTest.java` — one `@Nested` per function (7 groups), shouldBeCaseInsensitiveForFunctionNames (@ParameterizedTest: ABS, Abs, abs), shouldThrowWhenWrongArgumentCount (@ParameterizedTest all 7 functions)
-- [ ] T044 [US3] Add `@Nested` `EvaluateDouble` group (6 tests) to `DataExpressionParserTest` — shouldEvaluateArithmeticOverFields, shouldEvaluateFunctionCall, shouldEvaluateModuloOperator, shouldCoerceIntegerFieldToDouble, shouldCoerceLongFieldToDouble, shouldCoerceBigDecimalFieldToDouble
-- [ ] T045 [US3] Add `shouldThrowEvaluationExceptionWhenEvaluateDoubleCalledOnBooleanResult` test to `@Nested` `Errors` group in `DataExpressionParserTest`
-- [ ] T046 [US3] Verify `mvn test` passes for all EvaluateDouble and BuiltinFunctionRegistry tests
+- [x] T043 [P] [US3] Create `BuiltinFunctionRegistryTest` in `data-expression-parser-core/src/test/java/ru/zahaand/dataexpr/BuiltinFunctionRegistryTest.java` — one `@Nested` per function (7 groups), shouldBeCaseInsensitiveForFunctionNames (@ParameterizedTest: ABS, Abs, abs), shouldThrowWhenWrongArgumentCount (@ParameterizedTest all 7 functions)
+- [x] T044 [US3] Add `@Nested` `EvaluateDouble` group (6 tests) to `DataExpressionParserTest` — shouldEvaluateArithmeticOverFields, shouldEvaluateFunctionCall, shouldEvaluateModuloOperator, shouldCoerceIntegerFieldToDouble, shouldCoerceLongFieldToDouble, shouldCoerceBigDecimalFieldToDouble
+- [x] T045 [US3] Add `shouldThrowEvaluationExceptionWhenEvaluateDoubleCalledOnBooleanResult` test to `@Nested` `Errors` group in `DataExpressionParserTest`
+- [x] T046 [US3] Verify `mvn test` passes for all EvaluateDouble and BuiltinFunctionRegistry tests
 
 **Commit**: `feat(core): add built-in functions and double evaluation tests`
 
@@ -166,9 +166,9 @@
 
 ### Implementation for User Story 4
 
-- [ ] T047 [US4] Create `DataExpressionParserAutoConfiguration` in `data-expression-parser-spring-boot-starter/src/main/java/ru/zahaand/dataexpr/autoconfigure/DataExpressionParserAutoConfiguration.java` — `@AutoConfiguration`, `expressionEvaluator()` bean with `@ConditionalOnMissingBean`, `dataExpressionParser(ExpressionEvaluator)` bean with `@ConditionalOnMissingBean`
-- [ ] T048 [US4] Create `org.springframework.boot.autoconfigure.AutoConfiguration.imports` in `data-expression-parser-spring-boot-starter/src/main/resources/META-INF/spring/` containing one line: `ru.zahaand.dataexpr.autoconfigure.DataExpressionParserAutoConfiguration`
-- [ ] T049 [US4] Verify `mvn package` passes in both modules, starter JAR is produced
+- [x] T047 [US4] Create `DataExpressionParserAutoConfiguration` in `data-expression-parser-spring-boot-starter/src/main/java/ru/zahaand/dataexpr/autoconfigure/DataExpressionParserAutoConfiguration.java` — `@AutoConfiguration`, `expressionEvaluator()` bean with `@ConditionalOnMissingBean`, `dataExpressionParser(ExpressionEvaluator)` bean with `@ConditionalOnMissingBean`
+- [x] T048 [US4] Create `org.springframework.boot.autoconfigure.AutoConfiguration.imports` in `data-expression-parser-spring-boot-starter/src/main/resources/META-INF/spring/` containing one line: `ru.zahaand.dataexpr.autoconfigure.DataExpressionParserAutoConfiguration`
+- [x] T049 [US4] Verify `mvn package` passes in both modules, starter JAR is produced
 
 **Commit**: `feat(starter): add Spring Boot autoconfiguration`
 
@@ -180,8 +180,8 @@
 
 **Purpose**: Final verification across all modules
 
-- [ ] T050 Run full `mvn clean verify` and confirm all tests pass and both JARs are produced
-- [ ] T051 Verify `data-expression-parser-core` has zero Spring dependencies on classpath (check `mvn dependency:tree`)
+- [x] T050 Run full `mvn clean verify` and confirm all tests pass and both JARs are produced
+- [x] T051 Verify `data-expression-parser-core` has zero Spring dependencies on classpath (check `mvn dependency:tree`)
 
 ---
 
