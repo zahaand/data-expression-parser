@@ -1,6 +1,6 @@
 # Feature Specification: data-expression-parser
 
-**Feature Branch**: `001-foundation`
+**Feature Branch**: `001-data-expression-parser-core`
 **Created**: 2026-04-13
 **Status**: Draft
 **Input**: User description: "Reusable Java library that parses and evaluates business expressions over named data fields"
@@ -369,7 +369,7 @@ WS     : [ \t\r\n]+ -> skip ;
   character alternatives and MUST appear above the `ID` rule in the lexer.
 - `NOT IN` is two tokens (`NOT` followed by `IN`). `AstBuildingVisitor` MUST detect
   this combination and set `negated = true` on `InNode`.
-- Function names (`abs`, `sin`, etc.) are matched by the `ID` rule and resolved
+- Function names (`abs`, `round`, etc.) are matched by the `ID` rule and resolved
   case-insensitively at evaluation time via `BuiltinFunctionRegistry`.
 - Variable names in `EvaluationContext` are case-sensitive.
 - Field content inside `[...]` allows any characters except `]` and newline,
@@ -570,6 +570,9 @@ public final class ExpressionEvaluator {
   `ExpressionEvaluationException`.
 - Unknown function → throws `ExpressionEvaluationException`.
 - NaN and Infinity from math operations propagate silently (match `java.lang.Math` semantics).
+  NaN comparison semantics follow IEEE 754: `NaN > x`, `NaN < x`, `NaN == x`
+  all return `false`; `NaN != x` returns `true`. No special handling required —
+  this is the default behavior of Java `double` comparisons.
 - This class is package-private — not part of the public API.
 
 ---
