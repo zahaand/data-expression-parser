@@ -1,5 +1,7 @@
 package ru.zahaand.dataexpr.visitor;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import ru.zahaand.dataexpr.ast.*;
 import ru.zahaand.dataexpr.evaluator.BooleanResult;
 import ru.zahaand.dataexpr.evaluator.DoubleResult;
@@ -11,6 +13,8 @@ import ru.zahaand.dataexpr.function.BuiltinFunctionRegistry;
 import java.util.List;
 
 public final class EvaluatingVisitor {
+
+    private static final Logger log = LoggerFactory.getLogger(EvaluatingVisitor.class);
 
     private final EvaluationContext context;
 
@@ -53,6 +57,7 @@ public final class EvaluatingVisitor {
     private double toDouble(Expression expr) {
         Object rawValue = resolveRawValue(expr);
         if (rawValue instanceof Boolean) {
+            log.error("Boolean value used in arithmetic context");
             throw new ExpressionEvaluationException(
                     "Cannot use boolean value in arithmetic context");
         }
@@ -60,6 +65,7 @@ public final class EvaluatingVisitor {
             return number.doubleValue();
         }
         if (rawValue instanceof String) {
+            log.error("String value used in arithmetic context");
             throw new ExpressionEvaluationException(
                     "Cannot use string value in arithmetic context");
         }
@@ -67,6 +73,7 @@ public final class EvaluatingVisitor {
         if (result instanceof DoubleResult dr) {
             return dr.value();
         }
+        log.error("Unexpected evaluation result type: {}", result.getClass());
         throw new ExpressionEvaluationException(
                 "Expected numeric value in arithmetic context");
     }
@@ -96,12 +103,14 @@ public final class EvaluatingVisitor {
             case MULTIPLY -> left * right;
             case DIVIDE -> {
                 if (right == 0.0) {
+                    log.error("Division by zero in expression");
                     throw new ExpressionEvaluationException("Division by zero");
                 }
                 yield left / right;
             }
             case MODULO -> {
                 if (right == 0.0) {
+                    log.error("Division by zero in expression");
                     throw new ExpressionEvaluationException("Division by zero");
                 }
                 yield left % right;
@@ -187,6 +196,7 @@ public final class EvaluatingVisitor {
         if (value instanceof Number number) {
             return number.doubleValue();
         }
+        log.error("Ordering operator applied to non-numeric operand: {}", value);
         throw new ExpressionEvaluationException(
                 "Ordering operators (>, <, >=, <=) require numeric operands, got: " + value.getClass().getSimpleName());
     }

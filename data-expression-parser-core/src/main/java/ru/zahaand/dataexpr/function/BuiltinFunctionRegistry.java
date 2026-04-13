@@ -1,11 +1,15 @@
 package ru.zahaand.dataexpr.function;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import ru.zahaand.dataexpr.exception.ExpressionEvaluationException;
 
 import java.util.Map;
 import java.util.function.Function;
 
 public final class BuiltinFunctionRegistry {
+
+    private static final Logger log = LoggerFactory.getLogger(BuiltinFunctionRegistry.class);
 
     private BuiltinFunctionRegistry() {
     }
@@ -25,9 +29,11 @@ public final class BuiltinFunctionRegistry {
     public static double invoke(String name, double[] args) {
         FunctionDef def = FUNCTIONS.get(name.toLowerCase());
         if (def == null) {
+            log.error("Unknown function called: '{}'", name);
             throw new ExpressionEvaluationException("Unknown function: '" + name + "'");
         }
         if (args.length != def.arity()) {
+            log.error("Function '{}' called with wrong argument count: expected {}, got {}", name, def.arity(), args.length);
             throw new ExpressionEvaluationException(
                     "Function '" + name + "' expects " + def.arity()
                             + " argument(s) but got " + args.length);

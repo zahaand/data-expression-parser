@@ -5,6 +5,9 @@ import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.RecognitionException;
 import org.antlr.v4.runtime.Recognizer;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import ru.zahaand.dataexpr.DataExpressionLexer;
 import ru.zahaand.dataexpr.ast.Expression;
 import ru.zahaand.dataexpr.evaluator.BooleanResult;
@@ -18,6 +21,8 @@ import ru.zahaand.dataexpr.visitor.AstBuildingVisitor;
 
 public final class DataExpressionParser {
 
+    private static final Logger log = LoggerFactory.getLogger(DataExpressionParser.class);
+
     private final ExpressionEvaluator evaluator;
 
     public DataExpressionParser(ExpressionEvaluator evaluator) {
@@ -25,11 +30,10 @@ public final class DataExpressionParser {
     }
 
     public Expression parse(String expression) {
-        if (expression == null) {
-            throw new ExpressionParseException("Expression must not be null");
-        }
-        if (expression.isBlank()) {
-            throw new ExpressionParseException("Expression must not be blank");
+        if (StringUtils.isBlank(expression)) {
+            log.error("Failed to parse expression: expression is null or blank");
+            throw new ExpressionParseException(
+                    expression == null ? "Expression must not be null" : "Expression must not be blank");
         }
 
         DataExpressionLexer lexer = new DataExpressionLexer(CharStreams.fromString(expression));
@@ -56,6 +60,7 @@ public final class DataExpressionParser {
         if (result instanceof BooleanResult booleanResult) {
             return booleanResult.value();
         }
+        log.error("Expected boolean result but got {} for expression: {}", result.getClass().getSimpleName(), expression);
         throw new ExpressionEvaluationException(
                 "Expected boolean result but got double result");
     }
@@ -65,6 +70,7 @@ public final class DataExpressionParser {
         if (result instanceof DoubleResult doubleResult) {
             return doubleResult.value();
         }
+        log.error("Expected double result but got {} for expression: {}", result.getClass().getSimpleName(), expression);
         throw new ExpressionEvaluationException(
                 "Expected double result but got boolean result");
     }
