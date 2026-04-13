@@ -6,10 +6,15 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.junit.jupiter.MockitoExtension;
 import ru.zahaand.dataexpr.ast.*;
+import ru.zahaand.dataexpr.evaluator.BooleanResult;
+import ru.zahaand.dataexpr.evaluator.DoubleResult;
 import ru.zahaand.dataexpr.evaluator.EvaluationContext;
+import ru.zahaand.dataexpr.evaluator.EvaluationResult;
 import ru.zahaand.dataexpr.evaluator.ExpressionEvaluator;
 import ru.zahaand.dataexpr.exception.ExpressionEvaluationException;
 import ru.zahaand.dataexpr.exception.ExpressionParseException;
@@ -18,9 +23,11 @@ import ru.zahaand.dataexpr.parser.DataExpressionParser;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.within;
 
 @ExtendWith(MockitoExtension.class)
 class DataExpressionParserTest {
@@ -453,6 +460,156 @@ class DataExpressionParserTest {
             EvaluationContext ctx = EvaluationContext.of("amount", new BigDecimal("99.99"));
 
             assertThat(parser.evaluateDouble("[amount] + 0.01", ctx)).isEqualTo(100.0);
+        }
+    }
+
+    @Nested
+    class EvaluateBooleanParameterized {
+
+        @ParameterizedTest(name = "{0}")
+        @MethodSource("booleanExpressions")
+        @DisplayName("should evaluate boolean expression correctly")
+        void shouldEvaluateBooleanExpression(String expression, Map<String, Object> context, boolean expected) {
+            EvaluationResult result = parser.evaluate(expression, EvaluationContext.of(context));
+            assertThat(result).isInstanceOf(BooleanResult.class);
+            assertThat(((BooleanResult) result).value()).isEqualTo(expected);
+        }
+
+        static Stream<Arguments> booleanExpressions() {
+            return Stream.of(
+                // ── Numeric comparisons ──────────────────────────────────────────
+                Arguments.of("[age] > 18",        Map.of("age", 25.0),   true),
+                Arguments.of("[age] > 18",        Map.of("age", 18.0),   false),
+                Arguments.of("[age] >= 18",       Map.of("age", 18.0),   true),
+                Arguments.of("[age] < 100",       Map.of("age", 25.0),   true),
+                Arguments.of("[age] <= 25",       Map.of("age", 25.0),   true),
+                Arguments.of("[age] == 25",       Map.of("age", 25.0),   true),
+                Arguments.of("[age] != 25",       Map.of("age", 30.0),   true),
+
+                // ── String comparisons ───────────────────────────────────────────
+                Arguments.of("[status] == 'active'",  Map.of("status", "active"),  true),
+                Arguments.of("[status] == 'active'",  Map.of("status", "blocked"), false),
+                Arguments.of("[status] != 'blocked'", Map.of("status", "active"),  true),
+
+                // ── Mixed-type equality (different types are never equal) ─────────
+                Arguments.of("[age] == 'thirty'", Map.of("age", 25.0), false),
+                Arguments.of("[age] != 'thirty'", Map.of("age", 25.0), true),
+
+                // ── Logical AND / OR / NOT ────────────────────────────────────────
+                Arguments.of("[a] > 1 AND [b] > 1", Map.of("a", 2.0, "b", 2.0), true),
+                Arguments.of("[a] > 1 AND [b] > 1", Map.of("a", 2.0, "b", 0.0), false),
+                Arguments.of("[a] > 1 OR [b] > 1",  Map.of("a", 0.0, "b", 2.0), true),
+                Arguments.of("[a] > 1 OR [b] > 1",  Map.of("a", 0.0, "b", 0.0), false),
+                Arguments.of("NOT [a] > 1",          Map.of("a", 0.0),            true),
+                Arguments.of("NOT [a] > 1",          Map.of("a", 2.0),            false),
+
+                // ── AND has higher precedence than OR ─────────────────────────────
+                Arguments.of("[a] > 1 AND [b] > 1 OR [c] > 1",
+                    Map.of("a", 0.0, "b", 0.0, "c", 2.0), true),
+                Arguments.of("[a] > 1 OR [b] > 1 AND [c] > 1",
+                    Map.of("a", 2.0, "b", 0.0, "c", 0.0), true),
+
+                // ── IN / NOT IN ───────────────────────────────────────────────────
+                Arguments.of("[s] IN ('a', 'b', 'c')",     Map.of("s", "a"), true),
+                Arguments.of("[s] IN ('a', 'b', 'c')",     Map.of("s", "x"), false),
+                Arguments.of("[s] NOT IN ('a', 'b', 'c')", Map.of("s", "x"), true),
+                Arguments.of("[s] NOT IN ('a', 'b', 'c')", Map.of("s", "a"), false),
+                Arguments.of("[s] in ('a', 'b')",          Map.of("s", "a"), true)  // lowercase IN
+            );
+        }
+    }
+
+    @Nested
+    class EvaluateDoubleParameterized {
+
+        @ParameterizedTest(name = "{0}")
+        @MethodSource("doubleExpressions")
+        @DisplayName("should evaluate double expression correctly")
+        void shouldEvaluateDoubleExpression(String expression, Map<String, Object> context, double expected) {
+            EvaluationResult result = parser.evaluate(expression, EvaluationContext.of(context));
+            assertThat(result).isInstanceOf(DoubleResult.class);
+            assertThat(((DoubleResult) result).value()).isEqualTo(expected, within(1e-9));
+        }
+
+        static Stream<Arguments> doubleExpressions() {
+            return Stream.of(
+                // ── Basic arithmetic ──────────────────────────────────────────────
+                Arguments.of("[a] + [b]", Map.of("a", 3.0, "b", 2.0), 5.0),
+                Arguments.of("[a] - [b]", Map.of("a", 3.0, "b", 2.0), 1.0),
+                Arguments.of("[a] * [b]", Map.of("a", 3.0, "b", 2.0), 6.0),
+                Arguments.of("[a] / [b]", Map.of("a", 6.0, "b", 2.0), 3.0),
+                Arguments.of("[a] % [b]", Map.of("a", 7.0, "b", 3.0), 1.0),
+
+                // ── Power operator ────────────────────────────────────────────────
+                Arguments.of("[a] ^ 2",   Map.of("a", 3.0), 9.0),
+                Arguments.of("[a] ** 2",  Map.of("a", 3.0), 9.0),
+                Arguments.of("2 ^ 3 ^ 2", Map.of(),         512.0),  // right-associative: 2^(3^2) = 2^9
+
+                // ── Operator precedence ───────────────────────────────────────────
+                Arguments.of("[a] + [b] * [c]",   Map.of("a", 2.0, "b", 3.0, "c", 4.0), 14.0),
+                Arguments.of("([a] + [b]) * [c]", Map.of("a", 2.0, "b", 3.0, "c", 4.0), 20.0),
+
+                // ── Unary minus ───────────────────────────────────────────────────
+                Arguments.of("-[a]",       Map.of("a", 5.0),        -5.0),
+                Arguments.of("-[a] + [b]", Map.of("a", 3.0, "b", 10.0), 7.0),
+
+                // ── Built-in functions ────────────────────────────────────────────
+                Arguments.of("abs([a])",      Map.of("a", -5.0),        5.0),
+                Arguments.of("abs([a])",      Map.of("a",  5.0),        5.0),
+                Arguments.of("round([a])",    Map.of("a",  2.7),        3.0),
+                Arguments.of("floor([a])",    Map.of("a",  2.7),        2.0),
+                Arguments.of("ceil([a])",     Map.of("a",  2.1),        3.0),
+                Arguments.of("min([a], [b])", Map.of("a",  3.0, "b", 7.0), 3.0),
+                Arguments.of("max([a], [b])", Map.of("a",  3.0, "b", 7.0), 7.0),
+                Arguments.of("pow([a], [b])", Map.of("a",  2.0, "b", 10.0), 1024.0),
+
+                // ── Numeric type coercion ─────────────────────────────────────────
+                Arguments.of("[a] + 1", Map.of("a", Integer.valueOf(5)),          6.0),
+                Arguments.of("[a] + 1", Map.of("a", Long.valueOf(5L)),            6.0),
+                Arguments.of("[a] + 1", Map.of("a", new java.math.BigDecimal("5.5")), 6.5),
+
+                // ── Field names with spaces ───────────────────────────────────────
+                Arguments.of("[first name] + [last name]",
+                    Map.of("first name", 10.0, "last name", 5.0), 15.0)
+            );
+        }
+    }
+
+    @Nested
+    class EvaluateErrorParameterized {
+
+        @ParameterizedTest(name = "{0}")
+        @MethodSource("errorExpressions")
+        @DisplayName("should throw ExpressionEvaluationException for invalid evaluation")
+        void shouldThrowOnInvalidEvaluation(String expression, Map<String, Object> context) {
+            assertThatThrownBy(() ->
+                parser.evaluate(expression, EvaluationContext.of(context))
+            ).isInstanceOf(ExpressionEvaluationException.class);
+        }
+
+        static Stream<Arguments> errorExpressions() {
+            return Stream.of(
+                // ── Division by zero ──────────────────────────────────────────────
+                Arguments.of("[a] / 0",            Map.of("a", 10.0)),
+
+                // ── Ordering operator on string operand ───────────────────────────
+                Arguments.of("[a] > 'hello'",      Map.of("a", 5.0)),
+
+                // ── Arithmetic on string field ────────────────────────────────────
+                Arguments.of("[a] + 1",            Map.of("a", "text")),
+
+                // ── Arithmetic on boolean field ───────────────────────────────────
+                Arguments.of("[a] + 1",            Map.of("a", true)),
+
+                // ── Unknown field ─────────────────────────────────────────────────
+                Arguments.of("[unknown] > 1",      Map.of()),
+
+                // ── Unknown function ──────────────────────────────────────────────
+                Arguments.of("unknown_func([a])",  Map.of("a", 1.0)),
+
+                // ── Wrong argument count ──────────────────────────────────────────
+                Arguments.of("abs([a], [b])",      Map.of("a", 1.0, "b", 2.0))
+            );
         }
     }
 }
