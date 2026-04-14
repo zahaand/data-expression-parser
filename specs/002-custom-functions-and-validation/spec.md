@@ -122,6 +122,24 @@ separate context and assert the override is honored (`@ConditionalOnMissingBean`
 - Q: Should custom functions have access to `EvaluationContext`? → A: Yes. The
   `ExpressionFunction` signature receives both `double[] args` and `EvaluationContext`,
   enabling context-aware logic such as tier-based discounts.
+- Q: How should a `RuntimeException` thrown from a custom function during evaluation be
+  surfaced? → A: Wrap in `ExpressionEvaluationException("Error in custom function
+  '<name>': <msg>", cause)`, preserving the original as `cause`. Keeps the library's
+  exception contract uniform with v1.0.0.
+- Q: Should `Builder.register()` enforce the grammar ID format on custom function names?
+  → A: Yes. Reject names not matching `^[a-zA-Z_][a-zA-Z_0-9]*$` with
+  `IllegalArgumentException` at registration — prevents silent dead registrations that
+  would never be callable from an expression.
+- Q: Should the registry capture/enforce arity for custom functions? → A: No. Custom
+  functions self-validate `args.length` and throw; the library does not declare arity.
+  Supports variadic signatures naturally; thrown errors are wrapped per FR-108a.
+- Q: What happens on duplicate `register(name, ...)` calls in the same builder? → A:
+  Throw `IllegalArgumentException("Custom function '<name>' is already registered")`
+  (case-insensitive duplicate detection). Silent overwrites would mask bean-wiring bugs.
+- Q: Should the library emit logs in v1.1.0? → A: Yes — via SLF4J. Log `WARN` when a
+  custom function invocation fails (before wrapping in `ExpressionEvaluationException`)
+  and `DEBUG` when `validate()` returns an invalid result. SLF4J is API-only; no
+  transitive binding added.
 
 ## Requirements *(mandatory)*
 
@@ -138,6 +156,14 @@ separate context and assert the override is honored (`@ConditionalOnMissingBean`
 - **FR-105**: `Builder.register()` MUST throw `IllegalArgumentException` when the name
   conflicts with any built-in function name (`abs`, `round`, `floor`, `ceil`, `min`,
   `max`, `pow`) — case-insensitive.
+- **FR-105a**: `Builder.register()` MUST throw `IllegalArgumentException` when the name
+  does not match the grammar `ID` pattern `^[a-zA-Z_][a-zA-Z_0-9]*$`. Such names would
+  be unreachable from any parseable expression; failing fast at registration prevents
+  silent dead registrations.
+- **FR-105b**: `Builder.register()` MUST throw
+  `IllegalArgumentException("Custom function '<name>' is already registered")` when the
+  same name (case-insensitive) is registered twice on the same builder. Silent
+  overwrites would mask misconfigured bean wiring.
 - **FR-106**: `CustomFunctionRegistry.find(String)` MUST return `null` when the name is
   not registered.
 - **FR-107**: `CustomFunctionRegistry.empty()` MUST return a registry with no custom
@@ -146,6 +172,14 @@ separate context and assert the override is honored (`@ConditionalOnMissingBean`
   following order: (1) `CustomFunctionRegistry`, (2) `BuiltinFunctionRegistry`, and
   throw `ExpressionEvaluationException("Unknown function: '<name>'")` when neither
   contains the name.
+- **FR-108a**: When a custom `ExpressionFunction` throws any `RuntimeException` during
+  `apply(...)`, `EvaluatingVisitor` MUST catch it and rethrow as
+  `ExpressionEvaluationException("Error in custom function '<name>': <original message>",
+  cause)` with the original exception preserved as `cause`.
+- **FR-108b**: The library MUST NOT declare or enforce arity for custom functions. Each
+  custom function is responsible for validating `args.length` and throwing on mismatch;
+  such errors are wrapped per FR-108a. This preserves a minimal `ExpressionFunction`
+  signature and permits variadic behavior.
 - **FR-109**: `DataExpressionParser` MUST expose a `validate(String)` method that returns
   `ValidationResult.valid()` for syntactically correct expressions and
   `ValidationResult.invalid(errorMessage)` otherwise.
@@ -166,6 +200,12 @@ separate context and assert the override is honored (`@ConditionalOnMissingBean`
 - **FR-116**: Existing v1.0.0 public API contracts MUST remain unchanged. Any new
   `DataExpressionParser` constructor is additive; existing constructors and methods MUST
   continue to work.
+- **FR-117**: The core module MUST use SLF4J (`org.slf4j:slf4j-api`) for logging. When a
+  custom function invocation throws, the library MUST log at `WARN` with function name
+  and cause summary before wrapping into `ExpressionEvaluationException` (per FR-108a).
+  When `validate()` returns `ValidationResult.invalid(...)`, the library MUST log the
+  error at `DEBUG`. No SLF4J binding is declared — consumers supply their own binding
+  (existing v1.0.0 consumer expectation).
 
 ### Key Entities
 
@@ -223,7 +263,11 @@ Parent version bumps to `1.1.0`. Module coordinates:
 - `ru.zahaand:data-expression-parser-core:1.1.0` (jar)
 - `ru.zahaand:data-expression-parser-spring-boot-starter:1.1.0` (jar)
 
-No new external dependencies are introduced.
+New dependency:
+- `org.slf4j:slf4j-api` (compile, in `data-expression-parser-core`) — logging API only.
+  No binding is shipped; consumers provide their own. If v1.0.0 already inherits
+  SLF4J transitively via other dependencies, the addition is effectively a no-op at the
+  classpath level but is declared explicitly to make the usage contract visible.
 
 ---
 
@@ -262,8 +306,10 @@ public final class CustomFunctionRegistry {
 
         // Throws IllegalArgumentException if:
         //   - name is null or blank
+        //   - name does not match grammar ID pattern ^[a-zA-Z_][a-zA-Z_0-9]*$
         //   - name conflicts (case-insensitive) with a built-in: abs, round, floor,
         //     ceil, min, max, pow
+        //   - name was already registered on this builder (case-insensitive)
         public Builder register(String name, ExpressionFunction function) { ... }
 
         public CustomFunctionRegistry build() { ... }
@@ -345,6 +391,9 @@ Update function-call handling to check `CustomFunctionRegistry` first.
 - The `EvaluatingVisitor` gains a `CustomFunctionRegistry` field supplied by
   `ExpressionEvaluator` / `DataExpressionParser` wiring; the constructor change remains
   internal (package-private class).
+- Any `RuntimeException` thrown by a custom function MUST be caught and wrapped in
+  `ExpressionEvaluationException("Error in custom function '<name>': <original message>",
+  cause)`. The original exception is preserved as `cause` for diagnostics.
 
 #### `DataExpressionParserAutoConfiguration`
 
@@ -371,7 +420,8 @@ public DataExpressionParser dataExpressionParser(ExpressionEvaluator evaluator,
 ### Exception Contracts (Additions)
 
 - `IllegalArgumentException` — thrown by `CustomFunctionRegistry.Builder.register()`
-  when the name is null/blank or conflicts with a built-in (case-insensitive).
+  when the name is null/blank, does not match the grammar ID pattern
+  `^[a-zA-Z_][a-zA-Z_0-9]*$`, or conflicts with a built-in (case-insensitive).
 - `ExpressionParseException` — unchanged. Also thrown by `validate()` for null/blank
   input.
 - `ExpressionEvaluationException` — unchanged. Still thrown for unknown functions after
@@ -396,6 +446,10 @@ only in the locations explicitly listed below.
 - `shouldThrowWhenRegisteringBlankName`
 - `shouldThrowWhenNameConflictsWithBuiltin` — `@ParameterizedTest` over `abs`, `ABS`,
   `Abs`, `round`, `floor`, `ceil`, `min`, `max`, `pow`.
+- `shouldThrowWhenNameDoesNotMatchGrammarIdPattern` — `@ParameterizedTest` over
+  `"2pay"`, `"my-func"`, `"tax rate"`, `"fn!"`.
+- `shouldThrowWhenSameNameRegisteredTwice` — case-insensitive duplicate detection
+  (register `"TAX"` then `"tax"` → throws).
 - `shouldCreateEmptyRegistry`
 
 `@Nested` group `Evaluation` (via `DataExpressionParser`):
@@ -405,6 +459,12 @@ only in the locations explicitly listed below.
 - `shouldPreferCustomFunctionOverBuiltin` — registering a non-builtin name succeeds;
   built-in names are blocked at registration (covered by `Registration` group).
 - `shouldThrowWhenCustomFunctionNotFound`
+- `shouldWrapRuntimeExceptionFromCustomFunction` — function throws `RuntimeException`;
+  evaluator rethrows `ExpressionEvaluationException` with the original as `cause` and
+  message starting with `"Error in custom function '<name>': "`.
+- `shouldAllowCustomFunctionToValidateOwnArity` — function throws
+  `IllegalArgumentException` when `args.length` is wrong; verify it is wrapped per
+  FR-108a.
 
 #### `ValidationResultTest` — new class
 
