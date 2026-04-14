@@ -180,6 +180,13 @@ commit message.
 11. **No Spring in core**: Any Spring annotation (`@Component`, `@Service`, `@Bean`,
     `@Autowired`, etc.) in `data-expression-parser-core` is PROHIBITED.
     The core module MUST compile and run without Spring on the classpath.
+12. **Test coverage policy**: At the end of every sprint, all new and modified
+    public methods MUST have parameterized tests covering:
+    - All positive cases (valid inputs, expected outputs)
+    - All negative cases (invalid inputs, expected exceptions)
+    - All boundary and edge cases identified in the spec
+    This applies to library projects where manual runtime verification is not
+    available. Untested paths are considered unverified behavior.
 
 ---
 
