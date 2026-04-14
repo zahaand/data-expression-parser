@@ -89,7 +89,7 @@ Rationale: Consistent, explicit code style reduces cognitive load during review.
 
 ### VII. Testing Standards (NON-NEGOTIABLE)
 
-- Unit tests MUST use `@ExtendWith(MockitoExtension.class)`.
+- Unit tests that use Mockito mocks MUST use `@ExtendWith(MockitoExtension.class)`. Tests with no mocks MUST NOT add this annotation — redundant annotations are considered orphaned code (Dev Standard #5).
 - `@SpringBootTest` in unit tests is PROHIBITED.
 - Tests MUST be structured with `@Nested` classes, one per method under test.
 - Every test method MUST carry `@DisplayName` describing the scenario.
