@@ -214,6 +214,68 @@ public final class DataExpressionParser {
                 "Expected double result but got boolean result");
     }
 
+    /**
+     * Evaluates a pre-parsed AST against the given context.
+     *
+     * <p>Use this overload when the same expression is evaluated repeatedly against
+     * different contexts. Parse once via {@link #parse(String)}, then call this method
+     * in a loop to avoid redundant parsing overhead.
+     *
+     * @param expression the pre-parsed AST root node; must not be {@code null}
+     * @param context    the field values available during evaluation; must not be {@code null}
+     * @return the evaluation result
+     * @throws ExpressionEvaluationException if a runtime error occurs
+     */
+    public EvaluationResult evaluate(Expression expression, EvaluationContext context) {
+        return evaluator.evaluate(expression, context);
+    }
+
+    /**
+     * Evaluates a pre-parsed AST, unwrapping the result as a {@code boolean}.
+     *
+     * <p>Use this overload when the same expression is evaluated repeatedly against
+     * different contexts. Parse once via {@link #parse(String)}, then call this method
+     * in a loop to avoid redundant parsing overhead.
+     *
+     * @param expression the pre-parsed AST root node; must not be {@code null}
+     * @param context    the field values available during evaluation; must not be {@code null}
+     * @return the boolean result
+     * @throws ExpressionEvaluationException if the result is not a boolean, or a runtime error occurs
+     */
+    public boolean evaluateBoolean(Expression expression, EvaluationContext context) {
+        EvaluationResult result = evaluator.evaluate(expression, context);
+        if (result instanceof BooleanResult b) {
+            return b.value();
+        }
+        log.error("Expected BooleanResult but got {} for pre-parsed expression", result.getClass().getSimpleName());
+        throw new ExpressionEvaluationException(
+                "Expected boolean result but got: " + result.getClass().getSimpleName()
+        );
+    }
+
+    /**
+     * Evaluates a pre-parsed AST, unwrapping the result as a {@code double}.
+     *
+     * <p>Use this overload when the same expression is evaluated repeatedly against
+     * different contexts. Parse once via {@link #parse(String)}, then call this method
+     * in a loop to avoid redundant parsing overhead.
+     *
+     * @param expression the pre-parsed AST root node; must not be {@code null}
+     * @param context    the field values available during evaluation; must not be {@code null}
+     * @return the numeric result
+     * @throws ExpressionEvaluationException if the result is not a double, or a runtime error occurs
+     */
+    public double evaluateDouble(Expression expression, EvaluationContext context) {
+        EvaluationResult result = evaluator.evaluate(expression, context);
+        if (result instanceof DoubleResult d) {
+            return d.value();
+        }
+        log.error("Expected DoubleResult but got {} for pre-parsed expression", result.getClass().getSimpleName());
+        throw new ExpressionEvaluationException(
+                "Expected double result but got: " + result.getClass().getSimpleName()
+        );
+    }
+
     private static final class ThrowingErrorListener extends BaseErrorListener {
         @Override
         public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol,
