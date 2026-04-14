@@ -682,4 +682,53 @@ class DataExpressionParserTest {
             assertThat(result.isValid()).isTrue();
         }
     }
+
+    @Nested
+    @DisplayName("ParseAndReuse")
+    class ParseAndReuse {
+
+        @Test
+        @DisplayName("should evaluate boolean from pre-parsed AST")
+        void shouldEvaluateBooleanFromPreParsedAst() {
+            Expression ast = parser.parse("[age] > 18");
+            EvaluationContext ctx = EvaluationContext.of("age", 25.0);
+
+            assertThat(parser.evaluateBoolean(ast, ctx)).isTrue();
+        }
+
+        @Test
+        @DisplayName("should evaluate double from pre-parsed AST")
+        void shouldEvaluateDoubleFromPreParsedAst() {
+            Expression ast = parser.parse("[price] * 1.2");
+            EvaluationContext ctx = EvaluationContext.of("price", 100.0);
+
+            assertThat(parser.evaluateDouble(ast, ctx)).isEqualTo(120.0);
+        }
+
+        @Test
+        @DisplayName("should evaluate result from pre-parsed AST")
+        void shouldEvaluateResultFromPreParsedAst() {
+            Expression ast = parser.parse("[a] + [b]");
+            EvaluationContext ctx = EvaluationContext.of(Map.of("a", 2.0, "b", 3.0));
+
+            EvaluationResult result = parser.evaluate(ast, ctx);
+
+            assertThat(result).isInstanceOf(DoubleResult.class);
+            assertThat(((DoubleResult) result).value()).isEqualTo(5.0);
+        }
+
+        @Test
+        @DisplayName("should reuse parsed AST across multiple contexts")
+        void shouldReuseParsedAstAcrossMultipleContexts() {
+            Expression ast = parser.parse("[age] >= 18 AND [status] == 'active'");
+
+            EvaluationContext ctx1 = EvaluationContext.of(Map.of("age", 20.0, "status", "active"));
+            EvaluationContext ctx2 = EvaluationContext.of(Map.of("age", 15.0, "status", "active"));
+            EvaluationContext ctx3 = EvaluationContext.of(Map.of("age", 30.0, "status", "blocked"));
+
+            assertThat(parser.evaluateBoolean(ast, ctx1)).isTrue();
+            assertThat(parser.evaluateBoolean(ast, ctx2)).isFalse();
+            assertThat(parser.evaluateBoolean(ast, ctx3)).isFalse();
+        }
+    }
 }
