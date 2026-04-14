@@ -22,7 +22,7 @@ packages, no public API changes beyond the AST record rename.
 **Language/Version**: Java 21
 **Primary Dependencies**: ANTLR 4.13.2, SLF4J API 2.0.x (no binding shipped), Spring Boot 3.5.x (starter module only)
 **Storage**: N/A (library)
-**Testing**: JUnit 5 (Jupiter), AssertJ, Mockito (only when mocks are actually used — per Constitution VII, Dev Standard #12)
+**Testing**: JUnit 5 (Jupiter), AssertJ, Mockito (only when mocks are actually used — per Constitution VII, Dev Standard #5)
 **Target Platform**: JVM 21+, runtime-agnostic (core module has no Spring dependency)
 **Project Type**: Maven multi-module library (`data-expression-parser-core` + `data-expression-parser-spring-boot-starter`)
 **Performance Goals**: Parse + evaluate must not regress versus v1.1.0 (no new hot-path allocations beyond list iteration)
@@ -41,7 +41,7 @@ packages, no public API changes beyond the AST record rename.
 | IV. Secrets | N/A | No secrets. |
 | V. Logging Standards (NON-NEGOTIABLE) | PASS | `EvaluatingVisitor` MUST log at ERROR before throwing `ExpressionEvaluationException` for the three new error conditions (FR-210). |
 | VI. Class Member Ordering | PASS | New records have no instance state beyond record components; new visitor branches follow existing ordering. |
-| VII. Testing Standards (NON-NEGOTIABLE) | PASS | New `InCollectionTest` uses JUnit 5 + AssertJ. No mocks needed — no `@ExtendWith(MockitoExtension.class)` added (would be orphaned per Dev Standard #12 / Dev Standard #5). |
+| VII. Testing Standards (NON-NEGOTIABLE) | PASS | New `InCollectionTest` uses JUnit 5 + AssertJ. No mocks needed — no `@ExtendWith(MockitoExtension.class)` added (would be orphaned per Dev Standard #5). |
 | Dev Std #5 (no orphaned code) | PASS | Old `InNode(field, values)` shape is fully replaced; visitor branches rewritten; no leftover references. |
 | Dev Std #10 (AST records) | PASS | `InListNode` is a record; `InNode` stays a record; both in `ru.zahaand.dataexpr.ast`; `InListNode` added to `Expression` permits. |
 | Dev Std #11 (no Spring in core) | PASS | Only core AST/visitor/evaluator changes; no Spring imports. |

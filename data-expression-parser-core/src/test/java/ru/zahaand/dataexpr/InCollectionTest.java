@@ -198,5 +198,25 @@ class InCollectionTest {
                     .isInstanceOf(ExpressionEvaluationException.class)
                     .hasMessageContaining("not found in context");
         }
+
+        @Test
+        @DisplayName("should throw when operand field is missing from context")
+        void shouldThrowWhenOperandFieldIsMissingFromContext() {
+            var ctx = EvaluationContext.of("allowed", List.of("active", "trial"));
+            assertThatThrownBy(() ->
+                parser.evaluateBoolean("[status] IN [allowed]", ctx)
+            ).isInstanceOf(ExpressionEvaluationException.class);
+        }
+
+        @Test
+        @DisplayName("should throw when collection field resolves to non-List (self-referential)")
+        void shouldThrowWhenSelfReferentialFieldIsNotAList() {
+            // [a] IN [a] where a = "active" — right side is String, not List
+            var ctx = EvaluationContext.of("a", "active");
+            assertThatThrownBy(() ->
+                parser.evaluateBoolean("[a] IN [a]", ctx)
+            ).isInstanceOf(ExpressionEvaluationException.class)
+             .hasMessageContaining("must be a List");
+        }
     }
 }

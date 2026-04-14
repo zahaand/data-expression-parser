@@ -152,6 +152,12 @@ case InNode node:
 Element comparison uses the existing `isEqual()` method — no changes needed there.
 Numeric coercion via `Number.doubleValue()` already applies through `isEqual()`.
 
+**Missing key handling**: `context.get(fieldName)` throws
+`ExpressionEvaluationException("Unknown field: '<n>'")` for absent keys.
+The dynamic IN path does NOT catch this exception — it propagates directly
+to the caller (FR-204b). Only non-List type errors are caught and rethrown
+with the FR-204 message.
+
 **Logging format (Constitution V — NON-NEGOTIABLE):**
 Before each `ExpressionEvaluationException` throw in the IN operator path,
 log at ERROR with the same message as the exception:
