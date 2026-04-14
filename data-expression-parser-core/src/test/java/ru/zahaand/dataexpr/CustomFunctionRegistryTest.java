@@ -4,6 +4,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import ru.zahaand.dataexpr.evaluator.EvaluationContext;
 import ru.zahaand.dataexpr.evaluator.ExpressionEvaluator;
@@ -12,10 +14,13 @@ import ru.zahaand.dataexpr.function.CustomFunctionRegistry;
 import ru.zahaand.dataexpr.function.ExpressionFunction;
 import ru.zahaand.dataexpr.parser.DataExpressionParser;
 
+import java.util.Locale;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.within;
 
 class CustomFunctionRegistryTest {
 
@@ -216,6 +221,181 @@ class CustomFunctionRegistryTest {
             assertThatThrownBy(() -> parser.evaluateDouble("missing(1)", EvaluationContext.empty()))
                     .isInstanceOf(ExpressionEvaluationException.class)
                     .hasMessageContaining("Unknown function: 'missing'");
+        }
+    }
+
+    @Nested
+    class RegistrationParameterized {
+
+        @ParameterizedTest(name = "register(\"{0}\") succeeds")
+        @MethodSource("validNames")
+        @DisplayName("should register function successfully for valid name")
+        void shouldRegisterForValidName(String name) {
+            var registry = CustomFunctionRegistry.builder()
+                    .register(name, (args, ctx) -> args[0])
+                    .build();
+            assertThat(registry.find(name.toLowerCase(Locale.ROOT))).isNotNull();
+        }
+
+        static Stream<Arguments> validNames() {
+            return Stream.of(
+                    Arguments.of("MY_FUNC"),
+                    Arguments.of("_private"),
+                    Arguments.of("fn2"),
+                    Arguments.of("myFunc"),
+                    Arguments.of("TAX")
+            );
+        }
+
+        @ParameterizedTest(name = "find(\"{1}\") resolves function registered as \"{0}\"")
+        @MethodSource("caseInsensitiveLookups")
+        @DisplayName("should find registered function case-insensitively")
+        void shouldFindCaseInsensitively(String registeredName, String lookupName) {
+            ExpressionFunction fn = (args, ctx) -> args[0];
+            var registry = CustomFunctionRegistry.builder()
+                    .register(registeredName, fn)
+                    .build();
+            assertThat(registry.find(lookupName)).isSameAs(fn);
+        }
+
+        static Stream<Arguments> caseInsensitiveLookups() {
+            return Stream.of(
+                    Arguments.of("TAX", "tax"),
+                    Arguments.of("TAX", "TAX"),
+                    Arguments.of("TAX", "Tax"),
+                    Arguments.of("myFunc", "myfunc"),
+                    Arguments.of("myFunc", "MYFUNC")
+            );
+        }
+
+        @ParameterizedTest(name = "register(\"{0}\") throws — invalid name")
+        @MethodSource("invalidNames")
+        @DisplayName("should throw IllegalArgumentException for invalid name")
+        void shouldThrowForInvalidName(String name) {
+            assertThatThrownBy(() ->
+                    CustomFunctionRegistry.builder().register(name, (args, ctx) -> 0)
+            ).isInstanceOf(IllegalArgumentException.class);
+        }
+
+        static Stream<Arguments> invalidNames() {
+            return Stream.of(
+                    Arguments.of((Object) null),
+                    Arguments.of(""),
+                    Arguments.of("   "),
+                    Arguments.of("2pay"),
+                    Arguments.of("my-func"),
+                    Arguments.of("tax rate"),
+                    Arguments.of("fn!"),
+                    Arguments.of("123"),
+                    Arguments.of("-start")
+            );
+        }
+
+        @ParameterizedTest(name = "register(\"{0}\") conflicts with built-in")
+        @MethodSource("builtinNames")
+        @DisplayName("should throw IllegalArgumentException for built-in name conflict")
+        void shouldThrowForBuiltinConflict(String name) {
+            assertThatThrownBy(() ->
+                    CustomFunctionRegistry.builder().register(name, (args, ctx) -> 0)
+            ).isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("conflicts with built-in");
+        }
+
+        static Stream<Arguments> builtinNames() {
+            return Stream.of(
+                    Arguments.of("abs"),   Arguments.of("ABS"),   Arguments.of("Abs"),
+                    Arguments.of("round"), Arguments.of("ROUND"),
+                    Arguments.of("floor"), Arguments.of("FLOOR"),
+                    Arguments.of("ceil"),  Arguments.of("CEIL"),
+                    Arguments.of("min"),   Arguments.of("MIN"),
+                    Arguments.of("max"),   Arguments.of("MAX"),
+                    Arguments.of("pow"),   Arguments.of("POW")
+            );
+        }
+
+        @ParameterizedTest(name = "register \"{0}\" twice — duplicate detection")
+        @MethodSource("duplicateRegistrations")
+        @DisplayName("should throw IllegalArgumentException on duplicate registration")
+        void shouldThrowOnDuplicate(String first, String second) {
+            assertThatThrownBy(() ->
+                    CustomFunctionRegistry.builder()
+                            .register(first, (args, ctx) -> 0)
+                            .register(second, (args, ctx) -> 1)
+            ).isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("already registered");
+        }
+
+        static Stream<Arguments> duplicateRegistrations() {
+            return Stream.of(
+                    Arguments.of("TAX", "TAX"),
+                    Arguments.of("TAX", "tax"),
+                    Arguments.of("tax", "TAX"),
+                    Arguments.of("MyFunc", "myfunc")
+            );
+        }
+    }
+
+    @Nested
+    class EvaluationParameterized {
+
+        private DataExpressionParser parserWith(CustomFunctionRegistry registry) {
+            return new DataExpressionParser(new ExpressionEvaluator(registry), registry);
+        }
+
+        @ParameterizedTest(name = "{0} = {2}")
+        @MethodSource("customFunctionEvaluations")
+        @DisplayName("should evaluate custom function and return correct double")
+        void shouldEvaluateCustomFunction(
+                String expression,
+                Map<String, Object> context,
+                double expected) {
+            var registry = CustomFunctionRegistry.builder()
+                    .register("TAX",    (args, ctx) -> args[0] * 0.15)
+                    .register("ROUND2", (args, ctx) -> Math.round(args[0] * 100.0) / 100.0)
+                    .register("DISCOUNT", (args, ctx) -> {
+                        String tier = (String) ctx.get("customer_tier");
+                        return args[0] * ("premium".equals(tier) ? 0.8 : 0.95);
+                    })
+                    .build();
+            double result = parserWith(registry).evaluateDouble(expression, EvaluationContext.of(context));
+            assertThat(result).isEqualTo(expected, within(1e-9));
+        }
+
+        static Stream<Arguments> customFunctionEvaluations() {
+            return Stream.of(
+                    Arguments.of("TAX([price])",      Map.of("price", 100.0),  15.0),
+                    Arguments.of("TAX([price])",      Map.of("price", 0.0),    0.0),
+                    Arguments.of("TAX([price])",      Map.of("price", -100.0), -15.0),
+                    Arguments.of("TAX([price])",      Map.of("price", 200.0),  30.0),
+                    Arguments.of("ROUND2([x])",       Map.of("x", 1.235),      1.24),
+                    Arguments.of("ROUND2([x])",       Map.of("x", 1.0),        1.0),
+                    Arguments.of("DISCOUNT([price])", Map.of("price", 100.0, "customer_tier", "premium"),  80.0),
+                    Arguments.of("DISCOUNT([price])", Map.of("price", 100.0, "customer_tier", "standard"), 95.0),
+                    Arguments.of("DISCOUNT([price])", Map.of("price", 200.0, "customer_tier", "premium"),  160.0)
+            );
+        }
+
+        @ParameterizedTest(name = "{0} wraps as ExpressionEvaluationException")
+        @MethodSource("throwingFunctions")
+        @DisplayName("should wrap RuntimeException from custom function into ExpressionEvaluationException")
+        void shouldWrapRuntimeException(RuntimeException thrown) {
+            var registry = CustomFunctionRegistry.builder()
+                    .register("FAILING", (args, ctx) -> { throw thrown; })
+                    .build();
+            assertThatThrownBy(() ->
+                    parserWith(registry).evaluateDouble("FAILING([x])", EvaluationContext.of("x", 1.0))
+            ).isInstanceOf(ExpressionEvaluationException.class)
+                    .hasMessageContaining("Error in custom function 'FAILING'")
+                    .hasCause(thrown);
+        }
+
+        static Stream<Arguments> throwingFunctions() {
+            return Stream.of(
+                    Arguments.of(new NullPointerException("null value")),
+                    Arguments.of(new IllegalArgumentException("bad arg")),
+                    Arguments.of(new ArithmeticException("divide by zero")),
+                    Arguments.of(new IllegalStateException("illegal state"))
+            );
         }
     }
 }
