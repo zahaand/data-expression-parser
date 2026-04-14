@@ -22,6 +22,13 @@ right-hand side operand. Instead of a static literal list, the consumer can pass
 Both `IN [field]` and `NOT IN [field]` are supported.
 Static list syntax (`IN ('a', 'b')`) remains unchanged.
 
+## Clarifications
+
+### Session 2026-04-14
+
+- Q: When `IN [field]` is evaluated and the field does not exist in the `EvaluationContext`, what should happen? → A: Throw `ExpressionEvaluationException` with generic message `"Field '<name>' not found in context"`.
+- Q: When the operand (LHS) of `IN`/`NOT IN` resolves to null (missing context field), what should happen? → A: Throw `ExpressionEvaluationException` via the existing field-resolution path — same behavior as any other unresolved field reference in the expression.
+
 ## Maven Coordinates
 
 Parent version bumps to `1.2.0`. Module coordinates:
@@ -157,6 +164,8 @@ by the `IN [field]` operator.
 ## Exception Contracts (Additions)
 
 `ExpressionEvaluationException` — thrown by `EvaluatingVisitor` when:
+- The field referenced in `IN [field]` is absent from the context:
+  `"Field '<name>' not found in context"`
 - The field referenced in `IN [field]` resolves to a non-`List` value:
   `"Field '<name>' must be a List for IN operator, got: <type>"`
 - The collection contains an element that is not `Number`, `String`, or `Boolean`:
@@ -174,6 +183,12 @@ by the `IN [field]` operator.
 - **FR-204**: If the field referenced in `IN [field]` resolves to a non-`List` value,
   `ExpressionEvaluationException` MUST be thrown with message:
   `"Field '<name>' must be a List for IN operator, got: <type>"`.
+- **FR-204a**: If the field referenced in `IN [field]` is absent from the context
+  (`context.get(name) == null` with no entry), `ExpressionEvaluationException` MUST
+  be thrown with message: `"Field '<name>' not found in context"`.
+- **FR-204b**: If the operand (LHS) of `IN`/`NOT IN` is a field reference that
+  resolves to null (missing in context), the existing field-resolution path MUST
+  throw — no special-case handling is introduced for the IN operator.
 - **FR-205**: If any element in the collection is not `Number`, `String`, or `Boolean`,
   `ExpressionEvaluationException` MUST be thrown with message:
   `"Collection field '<name>' contains unsupported element type: <type>"`.
