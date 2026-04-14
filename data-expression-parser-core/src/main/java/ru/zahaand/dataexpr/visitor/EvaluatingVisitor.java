@@ -9,6 +9,8 @@ import ru.zahaand.dataexpr.evaluator.EvaluationContext;
 import ru.zahaand.dataexpr.evaluator.EvaluationResult;
 import ru.zahaand.dataexpr.exception.ExpressionEvaluationException;
 import ru.zahaand.dataexpr.function.BuiltinFunctionRegistry;
+import ru.zahaand.dataexpr.function.CustomFunctionRegistry;
+import ru.zahaand.dataexpr.function.ExpressionFunction;
 
 import java.util.List;
 
@@ -17,9 +19,15 @@ public final class EvaluatingVisitor {
     private static final Logger log = LoggerFactory.getLogger(EvaluatingVisitor.class);
 
     private final EvaluationContext context;
+    private final CustomFunctionRegistry customFunctionRegistry;
 
     public EvaluatingVisitor(EvaluationContext context) {
+        this(context, CustomFunctionRegistry.empty());
+    }
+
+    public EvaluatingVisitor(EvaluationContext context, CustomFunctionRegistry customFunctionRegistry) {
         this.context = context;
+        this.customFunctionRegistry = customFunctionRegistry;
     }
 
     public EvaluationResult evaluate(Expression expression) {
@@ -129,6 +137,16 @@ public final class EvaluatingVisitor {
         double[] args = new double[node.args().size()];
         for (int i = 0; i < node.args().size(); i++) {
             args[i] = toDouble(node.args().get(i));
+        }
+        ExpressionFunction custom = customFunctionRegistry.find(node.name());
+        if (custom != null) {
+            try {
+                return new DoubleResult(custom.apply(args, context));
+            } catch (RuntimeException ex) {
+                log.warn("Custom function '{}' threw {}", node.name(), ex.toString());
+                throw new ExpressionEvaluationException(
+                        "Error in custom function '" + node.name() + "': " + ex.getMessage(), ex);
+            }
         }
         double result = BuiltinFunctionRegistry.invoke(node.name(), args);
         return new DoubleResult(result);

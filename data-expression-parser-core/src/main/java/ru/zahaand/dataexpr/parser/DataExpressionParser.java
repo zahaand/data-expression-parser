@@ -17,6 +17,7 @@ import ru.zahaand.dataexpr.evaluator.EvaluationResult;
 import ru.zahaand.dataexpr.evaluator.ExpressionEvaluator;
 import ru.zahaand.dataexpr.exception.ExpressionEvaluationException;
 import ru.zahaand.dataexpr.exception.ExpressionParseException;
+import ru.zahaand.dataexpr.function.CustomFunctionRegistry;
 import ru.zahaand.dataexpr.visitor.AstBuildingVisitor;
 
 public final class DataExpressionParser {
@@ -24,9 +25,51 @@ public final class DataExpressionParser {
     private static final Logger log = LoggerFactory.getLogger(DataExpressionParser.class);
 
     private final ExpressionEvaluator evaluator;
+    private final CustomFunctionRegistry customFunctionRegistry;
 
     public DataExpressionParser(ExpressionEvaluator evaluator) {
+        this(evaluator, CustomFunctionRegistry.empty());
+    }
+
+    public DataExpressionParser(ExpressionEvaluator evaluator, CustomFunctionRegistry customFunctionRegistry) {
         this.evaluator = evaluator;
+        this.customFunctionRegistry = customFunctionRegistry;
+    }
+
+    public ValidationResult validate(String expression) {
+        if (StringUtils.isBlank(expression)) {
+            throw new ExpressionParseException(
+                    expression == null ? "Expression must not be null" : "Expression must not be blank");
+        }
+
+        DataExpressionLexer lexer = new DataExpressionLexer(CharStreams.fromString(expression));
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+        ru.zahaand.dataexpr.DataExpressionParser parser =
+                new ru.zahaand.dataexpr.DataExpressionParser(tokens);
+
+        String[] firstError = new String[1];
+        BaseErrorListener capturing = new BaseErrorListener() {
+            @Override
+            public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol,
+                                    int line, int charPositionInLine, String msg,
+                                    RecognitionException e) {
+                if (firstError[0] == null) {
+                    firstError[0] = "Parse error at line " + line + ":" + charPositionInLine + ": " + msg;
+                }
+            }
+        };
+        lexer.removeErrorListeners();
+        lexer.addErrorListener(capturing);
+        parser.removeErrorListeners();
+        parser.addErrorListener(capturing);
+
+        parser.prog();
+
+        if (firstError[0] == null) {
+            return ValidationResult.valid();
+        }
+        log.debug("Expression validation failed: {}", firstError[0]);
+        return ValidationResult.invalid(firstError[0]);
     }
 
     public Expression parse(String expression) {
