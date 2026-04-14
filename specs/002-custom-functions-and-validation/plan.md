@@ -106,12 +106,12 @@ The following clarifications from the spec session (2026-04-14) are integrated i
 
 **Goal**: all three `pom.xml` files updated to v1.1.0 and SLF4J API declared. `mvn compile` passes.
 
-- [ ] Update parent `pom.xml`: `<version>1.0.0</version>` → `<version>1.1.0</version>`.
-- [ ] Add `org.slf4j:slf4j-api` to parent `dependencyManagement` (version aligned with Spring Boot 3.5.x BOM or pinned explicitly if not present).
-- [ ] Update `data-expression-parser-core/pom.xml`:
+- [x] Update parent `pom.xml`: `<version>1.0.0</version>` → `<version>1.1.0</version>`.
+- [x] Add `org.slf4j:slf4j-api` to parent `dependencyManagement` (version aligned with Spring Boot 3.5.x BOM or pinned explicitly if not present).
+- [x] Update `data-expression-parser-core/pom.xml`:
   - Parent version reference → `1.1.0`.
   - Add `org.slf4j:slf4j-api` as a `compile` dependency (version inherited from parent `dependencyManagement`).
-- [ ] Update `data-expression-parser-spring-boot-starter/pom.xml`:
+- [x] Update `data-expression-parser-spring-boot-starter/pom.xml`:
   - Parent version reference → `1.1.0`.
   - `data-expression-parser-core` dependency version → `1.1.0`.
 - [ ] **Verify**: `mvn compile` passes in both modules with no errors.
@@ -125,14 +125,14 @@ The following clarifications from the spec session (2026-04-14) are integrated i
 **Goal**: `ExpressionFunction`, `CustomFunctionRegistry`, `ValidationResult` compile cleanly.
 No behavioral changes to existing classes yet.
 
-- [ ] Create `ru.zahaand.dataexpr.function.ExpressionFunction`:
+- [x] Create `ru.zahaand.dataexpr.function.ExpressionFunction`:
   - `@FunctionalInterface`
   - Single method: `double apply(double[] args, EvaluationContext context)`.
-- [ ] Expose built-in function names to the new registry (minimally-invasive way):
+- [x] Expose built-in function names to the new registry (minimally-invasive way):
   - Add a package-visible constant on `BuiltinFunctionRegistry`:
     `static final Set<String> BUILTIN_NAMES = Set.of("abs","round","floor","ceil","min","max","pow")`.
   - This is the only change to `BuiltinFunctionRegistry` permitted in this phase; no behavior change.
-- [ ] Create `ru.zahaand.dataexpr.function.CustomFunctionRegistry`:
+- [x] Create `ru.zahaand.dataexpr.function.CustomFunctionRegistry`:
   - `public final class`; package `ru.zahaand.dataexpr.function`.
   - Private constructor taking `Map<String, ExpressionFunction>` (defensively copied as an unmodifiable map).
   - `public static CustomFunctionRegistry empty()` — returns an instance with an empty map.
@@ -150,7 +150,7 @@ No behavioral changes to existing classes yet.
       6. Store as `entries.put(name.toLowerCase(Locale.ROOT), function)`.
       7. `return this`.
     - `public CustomFunctionRegistry build()` — constructs the registry with an unmodifiable snapshot of `entries`.
-- [ ] Create `ru.zahaand.dataexpr.parser.ValidationResult`:
+- [x] Create `ru.zahaand.dataexpr.parser.ValidationResult`:
   - `public final class`; single constructor is private.
   - Fields: `boolean valid`, `String errorMessage` (nullable).
   - `public static ValidationResult valid()` — returns a cached singleton with `valid=true`, `errorMessage=null`.
@@ -168,7 +168,7 @@ No behavioral changes to existing classes yet.
 **Goal**: `EvaluatingVisitor` consults the custom registry first; `DataExpressionParser`
 gains a registry-aware constructor and `validate(...)`.
 
-- [ ] Update `EvaluatingVisitor`:
+- [x] Update `EvaluatingVisitor`:
   - Add `private final CustomFunctionRegistry customFunctionRegistry` field.
   - Constructor accepts `CustomFunctionRegistry` (non-null).
   - In the function-call branch (replace the existing delegation to `BuiltinFunctionRegistry`):
@@ -180,12 +180,12 @@ gains a registry-aware constructor and `validate(...)`.
        - `catch (RuntimeException ex) { log.warn("Custom function '{}' threw {}", name, ex.toString()); throw new ExpressionEvaluationException("Error in custom function '" + name + "': " + ex.getMessage(), ex); }` (FR-108a, FR-117).
     5. Else delegate to `BuiltinFunctionRegistry` (unchanged behavior, including arity check and `Unknown function` message for non-existent names).
   - Add `private static final Logger log = LoggerFactory.getLogger(EvaluatingVisitor.class)` if not already present.
-- [ ] Update `ExpressionEvaluator`:
+- [x] Update `ExpressionEvaluator`:
   - Add `private final CustomFunctionRegistry customFunctionRegistry` field.
   - New constructor: `public ExpressionEvaluator(CustomFunctionRegistry customFunctionRegistry)`.
   - Keep the existing no-arg constructor; it must delegate to `this(CustomFunctionRegistry.empty())` for backward compatibility (FR-116).
   - Pass `customFunctionRegistry` into every `new EvaluatingVisitor(...)` it constructs.
-- [ ] Update `DataExpressionParser`:
+- [x] Update `DataExpressionParser`:
   - Add `private final CustomFunctionRegistry customFunctionRegistry` field.
   - New constructor: `public DataExpressionParser(ExpressionEvaluator evaluator, CustomFunctionRegistry customFunctionRegistry)` (stores both).
   - Keep the v1.0.0 constructor `public DataExpressionParser(ExpressionEvaluator evaluator)`; it must delegate to `this(evaluator, CustomFunctionRegistry.empty())` (FR-116).
@@ -210,7 +210,7 @@ gains a registry-aware constructor and `validate(...)`.
 **Goal**: autoconfiguration exposes `CustomFunctionRegistry` as a bean and wires it into
 `DataExpressionParser`.
 
-- [ ] Update `DataExpressionParserAutoConfiguration`:
+- [x] Update `DataExpressionParserAutoConfiguration`:
   - Add bean method:
     ```java
     @Bean
@@ -240,7 +240,7 @@ gains a registry-aware constructor and `validate(...)`.
 
 **Goal**: `mvn test` green — existing v1.0.0 suite plus all new tests.
 
-- [ ] Create `CustomFunctionRegistryTest`:
+- [x] Create `CustomFunctionRegistryTest`:
   - `@Nested Registration`:
     - `shouldRegisterCustomFunctionSuccessfully`
     - `shouldFindRegisteredFunctionCaseInsensitively` — registered as `"TAX"`, found as `"tax"`, `"TAX"`, `"Tax"`
@@ -258,7 +258,7 @@ gains a registry-aware constructor and `validate(...)`.
     - `shouldThrowEvaluationExceptionWhenCustomFunctionThrows` — lambda throws `RuntimeException`; assert wrapped as `ExpressionEvaluationException` with message prefix `"Error in custom function '<name>': "` and `getCause()` is the original exception
     - `shouldAllowCustomFunctionToValidateOwnArity` — lambda throws `IllegalArgumentException` on wrong arg count; verify wrapped per FR-108a
     - `shouldThrowWhenFunctionNotFoundInEitherRegistry`
-- [ ] Create `ValidationResultTest`:
+- [x] Create `ValidationResultTest`:
   - `shouldReturnValidForCorrectExpression`
   - `shouldReturnInvalidForMalformedExpression`
   - `shouldContainErrorMessageWithLineAndColumn` — assert message matches regex `Parse error at line \d+:\d+: .+`
@@ -266,9 +266,9 @@ gains a registry-aware constructor and `validate(...)`.
   - `shouldThrowParseExceptionForBlankInput`
   - `shouldReturnEmptyOptionalWhenValid`
   - `shouldReturnPresentOptionalWhenInvalid`
-- [ ] Add to existing `DataExpressionParserTest` — `Errors` group:
+- [x] Add to existing `DataExpressionParserTest` — `Errors` group:
   - `shouldThrowWhenCustomFunctionRegisteredWithBuiltinName` — exercises the conflict check through the parser's wiring; confirms `IllegalArgumentException` (not `ExpressionEvaluationException`) at build time.
-- [ ] Add new `@Nested Validation` group to `DataExpressionParserTest`:
+- [x] Add new `@Nested Validation` group to `DataExpressionParserTest`:
   - `shouldReturnValidResultForValidExpression` — e.g. `[age] > 18 AND [status] == 'active'`
   - `shouldReturnInvalidResultWithMessageForMalformedExpression` — e.g. `[age] >`
   - `shouldValidateWithoutEvaluating` — validate a complex expression referencing undefined fields; assert `valid()` and do NOT invoke `evaluate*` (FR-112).

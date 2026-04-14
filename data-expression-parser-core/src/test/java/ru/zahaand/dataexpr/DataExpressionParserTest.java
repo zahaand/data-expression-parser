@@ -158,8 +158,9 @@ class DataExpressionParserTest {
             assertThat(result).isInstanceOf(InNode.class);
             InNode node = (InNode) result;
             assertThat(node.negated()).isFalse();
-            assertThat(node.field()).isInstanceOf(FieldNode.class);
-            assertThat(node.values()).hasSize(2);
+            assertThat(node.operand()).isInstanceOf(FieldNode.class);
+            assertThat(node.collection()).isInstanceOf(InListNode.class);
+            assertThat(((InListNode) node.collection()).values()).hasSize(2);
         }
 
         @Test
@@ -170,6 +171,43 @@ class DataExpressionParserTest {
             assertThat(result).isInstanceOf(InNode.class);
             InNode node = (InNode) result;
             assertThat(node.negated()).isTrue();
+        }
+
+        @Test
+        @DisplayName("should return InNode with FieldNode collection for dynamic IN")
+        void shouldReturnInNodeWithFieldNodeCollectionForDynamicIn() {
+            Expression result = parser.parse("[status] IN [allowed]");
+
+            assertThat(result).isInstanceOf(InNode.class);
+            InNode node = (InNode) result;
+            assertThat(node.negated()).isFalse();
+            assertThat(node.operand()).isInstanceOf(FieldNode.class);
+            assertThat(((FieldNode) node.operand()).fieldName()).isEqualTo("status");
+            assertThat(node.collection()).isInstanceOf(FieldNode.class);
+            assertThat(((FieldNode) node.collection()).fieldName()).isEqualTo("allowed");
+        }
+
+        @Test
+        @DisplayName("should return InNode with FieldNode collection for dynamic NOT IN")
+        void shouldReturnInNodeWithFieldNodeCollectionForDynamicNotIn() {
+            Expression result = parser.parse("[status] NOT IN [allowed]");
+
+            assertThat(result).isInstanceOf(InNode.class);
+            InNode node = (InNode) result;
+            assertThat(node.negated()).isTrue();
+            assertThat(node.collection()).isInstanceOf(FieldNode.class);
+            assertThat(((FieldNode) node.collection()).fieldName()).isEqualTo("allowed");
+        }
+
+        @Test
+        @DisplayName("should return InNode with InListNode collection for static IN")
+        void shouldReturnInNodeWithInListNodeCollectionForStaticIn() {
+            Expression result = parser.parse("[role] IN ('admin', 'moderator')");
+
+            assertThat(result).isInstanceOf(InNode.class);
+            InNode node = (InNode) result;
+            assertThat(node.collection()).isInstanceOf(InListNode.class);
+            assertThat(((InListNode) node.collection()).values()).hasSize(2);
         }
 
         @Test

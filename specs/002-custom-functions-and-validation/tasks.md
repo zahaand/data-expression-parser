@@ -29,8 +29,8 @@ Maven multi-module library:
 - [X] T001 Bump parent version from 1.0.0 to 1.1.0 in `pom.xml` (root `<version>` element)
 - [X] T002 [P] Update parent-reference version to 1.1.0 in `data-expression-parser-core/pom.xml`
 - [X] T003 [P] Update parent-reference version and the `data-expression-parser-core` dependency version to 1.1.0 in `data-expression-parser-spring-boot-starter/pom.xml`
-- [X] T004 Add `org.slf4j:slf4j-api` entry to `<dependencyManagement>` in `pom.xml` (already present from v1.0.0)
-- [X] T005 Declare `org.slf4j:slf4j-api` as a `compile` dependency in `data-expression-parser-core/pom.xml` (already present from v1.0.0)
+- [X] T004 Verify `org.slf4j:slf4j-api` is present in parent `pom.xml` `dependencyManagement` (already added in v1.0.0 — confirm version aligns with Spring Boot 3.5.x BOM)
+- [X] T005 Verify `org.slf4j:slf4j-api` is declared as compile dependency in `data-expression-parser-core/pom.xml` (already present — no change required)
 - [X] T006 Run `mvn -q compile` at repo root and confirm both modules compile with no errors (commit gate for Phase 1: `chore: bump version to 1.1.0`)
 
 ---
