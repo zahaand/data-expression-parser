@@ -14,10 +14,10 @@ Single user story — **US1: Dynamic IN/NOT IN against context collection** — 
 
 **Goal**: Bump parent version `1.1.0` → `1.2.0` in all three pom files; confirm compile.
 
-- [ ] T001 [P] Bump parent project version `1.1.0` → `1.2.0` in `pom.xml`
-- [ ] T002 [P] Update parent-reference version to `1.2.0` in `data-expression-parser-core/pom.xml`
-- [ ] T003 [P] Update parent-reference version and the `data-expression-parser-core` dependency version to `1.2.0` in `data-expression-parser-spring-boot-starter/pom.xml`
-- [ ] T004 Run `mvn -q compile` at repo root and confirm both modules compile with no errors (commit gate for Phase 1: `chore: bump version to 1.2.0`)
+- [X] T001 [P] Bump parent project version `1.1.0` → `1.2.0` in `pom.xml`
+- [X] T002 [P] Update parent-reference version to `1.2.0` in `data-expression-parser-core/pom.xml`
+- [X] T003 [P] Update parent-reference version and the `data-expression-parser-core` dependency version to `1.2.0` in `data-expression-parser-spring-boot-starter/pom.xml`
+- [X] T004 Run `mvn -q compile` at repo root and confirm both modules compile with no errors (commit gate for Phase 1: `chore: bump version to 1.2.0`)
 
 **Independent test criterion**: `mvn -q compile` succeeds; all poms report `1.2.0`.
 
@@ -29,9 +29,9 @@ Single user story — **US1: Dynamic IN/NOT IN against context collection** — 
 
 **Blocks**: all US1 tasks.
 
-- [ ] T005 [P] Create new record `InListNode(List<Expression> values)` in `data-expression-parser-core/src/main/java/ru/zahaand/dataexpr/ast/InListNode.java` — implements `Expression` sealed interface
-- [ ] T006 Refactor `InNode` to `InNode(Expression operand, Expression collection, boolean negated)` in `data-expression-parser-core/src/main/java/ru/zahaand/dataexpr/ast/InNode.java` (rename `field`→`operand`, `values`→`collection`, add `negated`)
-- [ ] T007 Add `InListNode` to the `permits` clause of `Expression` in `data-expression-parser-core/src/main/java/ru/zahaand/dataexpr/ast/Expression.java`
+- [X] T005 [P] Create new record `InListNode(List<Expression> values)` in `data-expression-parser-core/src/main/java/ru/zahaand/dataexpr/ast/InListNode.java` — implements `Expression` sealed interface
+- [X] T006 Refactor `InNode` to `InNode(Expression operand, Expression collection, boolean negated)` in `data-expression-parser-core/src/main/java/ru/zahaand/dataexpr/ast/InNode.java` (rename `field`→`operand`, `values`→`collection`, add `negated`)
+- [X] T007 Add `InListNode` to the `permits` clause of `Expression` in `data-expression-parser-core/src/main/java/ru/zahaand/dataexpr/ast/Expression.java`
 
 **Checkpoint**: `mvn -q compile` will fail here — visitors still reference old `InNode` shape. Proceed to US1 without committing.
 
@@ -45,29 +45,29 @@ Single user story — **US1: Dynamic IN/NOT IN against context collection** — 
 
 ### Grammar + AST wiring
 
-- [ ] T008 [US1] Extend `comparison` rule in `data-expression-parser-core/src/main/antlr4/ru/zahaand/dataexpr/DataExpression.g4` with two new alternatives: `additive IN FIELD` and `additive NOT IN FIELD`
-- [ ] T009 [US1] Update `AstBuildingVisitor.visitComparison` in `data-expression-parser-core/src/main/java/ru/zahaand/dataexpr/visitor/AstBuildingVisitor.java` to emit `InNode(operand, InListNode(values), false)` for static `IN (...)`, `InNode(operand, InListNode(values), true)` for static `NOT IN (...)`, `InNode(operand, FieldNode(name), false)` for `IN FIELD`, and `InNode(operand, FieldNode(name), true)` for `NOT IN FIELD` (strip `[` / `]` from FIELD token text)
+- [X] T008 [US1] Extend `comparison` rule in `data-expression-parser-core/src/main/antlr4/ru/zahaand/dataexpr/DataExpression.g4` with two new alternatives: `additive IN FIELD` and `additive NOT IN FIELD`
+- [X] T009 [US1] Update `AstBuildingVisitor.visitComparison` in `data-expression-parser-core/src/main/java/ru/zahaand/dataexpr/visitor/AstBuildingVisitor.java` to emit `InNode(operand, InListNode(values), false)` for static `IN (...)`, `InNode(operand, InListNode(values), true)` for static `NOT IN (...)`, `InNode(operand, FieldNode(name), false)` for `IN FIELD`, and `InNode(operand, FieldNode(name), true)` for `NOT IN FIELD` (strip `[` / `]` from FIELD token text)
 
 ### Evaluator branch
 
-- [ ] T010 [US1] Update `InNode` evaluation branch in `data-expression-parser-core/src/main/java/ru/zahaand/dataexpr/visitor/EvaluatingVisitor.java`: handle `collection instanceof InListNode` (existing static list logic, unchanged behavior) and `collection instanceof FieldNode` (dynamic list logic per spec §Visitor Changes); return `BooleanResult(negated != found)`
-- [ ] T011 [US1] In `EvaluatingVisitor`, implement the three error branches for the dynamic-collection path: (a) missing field — throw `ExpressionEvaluationException("Field '<name>' not found in context")`; (b) non-List value — throw `ExpressionEvaluationException("Field '<name>' must be a List for IN operator, got: <simpleName>")`; (c) unsupported element type (including `null`) — throw `ExpressionEvaluationException("Collection field '<name>' contains unsupported element type: <simpleName or 'null'>")`
-- [ ] T012 [US1] In `EvaluatingVisitor`, add `log.error("IN operator error for field '{}': {}", fieldName, exceptionMessage)` immediately before each of the three throws in T011 (Constitution V — NON-NEGOTIABLE; FR-210, FR-210a)
+- [X] T010 [US1] Update `InNode` evaluation branch in `data-expression-parser-core/src/main/java/ru/zahaand/dataexpr/visitor/EvaluatingVisitor.java`: handle `collection instanceof InListNode` (existing static list logic, unchanged behavior) and `collection instanceof FieldNode` (dynamic list logic per spec §Visitor Changes); return `BooleanResult(negated != found)`
+- [X] T011 [US1] In `EvaluatingVisitor`, implement the three error branches for the dynamic-collection path: (a) missing field — throw `ExpressionEvaluationException("Field '<name>' not found in context")`; (b) non-List value — throw `ExpressionEvaluationException("Field '<name>' must be a List for IN operator, got: <simpleName>")`; (c) unsupported element type (including `null`) — throw `ExpressionEvaluationException("Collection field '<name>' contains unsupported element type: <simpleName or 'null'>")`
+- [X] T012 [US1] In `EvaluatingVisitor`, add `log.error("IN operator error for field '{}': {}", fieldName, exceptionMessage)` immediately before each of the three throws in T011 (Constitution V — NON-NEGOTIABLE; FR-210, FR-210a)
 
 ### Compile gate
 
-- [ ] T013 [US1] Run `mvn -q compile` at repo root; fix any remaining reference to old `InNode` fields. Commit Phase 2 + US1 source changes as `feat(core): support dynamic IN/NOT IN against context collection`
+- [X] T013 [US1] Run `mvn -q compile` at repo root; fix any remaining reference to old `InNode` fields. Commit Phase 2 + US1 source changes as `feat(core): support dynamic IN/NOT IN against context collection`
 
 ### Tests
 
-- [ ] T014 [P] [US1] Create `InCollectionTest` at `data-expression-parser-core/src/test/java/ru/zahaand/dataexpr/InCollectionTest.java` with `@Nested` group `EvaluateBoolean` containing: `shouldReturnTrueWhenFieldValueIsInStringCollection`, `shouldReturnFalseWhenFieldValueIsNotInStringCollection`, `shouldReturnTrueWhenFieldValueIsInNumericCollection`, `shouldReturnFalseWhenFieldValueIsNotInNumericCollection`, `shouldReturnTrueForNotInWhenValueAbsent`, `shouldReturnFalseForNotInWhenValuePresent`, `shouldHandleMixedTypeCollectionWithNoMatch`, `shouldReturnFalseWhenCollectionIsEmpty`
-- [ ] T015 [P] [US1] Add `@Nested` group `EvaluateBooleanParameterized` to `InCollectionTest` with a single `@ParameterizedTest` `shouldEvaluateInCollectionExpression` + `@MethodSource` `Stream<Arguments>` covering positive and negative cases for both `IN` and `NOT IN` with string and numeric collections
-- [ ] T016 [P] [US1] Add `@Nested` group `Errors` to `InCollectionTest`: `shouldThrowWhenCollectionFieldIsNotAList` (asserts `hasMessageContaining("must be a List for IN operator, got:")`), `shouldThrowWhenCollectionContainsUnsupportedElementType` (asserts both a non-scalar type and a `null` element via a parameterized test), `shouldThrowWhenCollectionFieldDoesNotExist` (asserts `hasMessageContaining("not found in context")`)
-- [ ] T017 [US1] Add to existing `Parse` `@Nested` group in `data-expression-parser-core/src/test/java/ru/zahaand/dataexpr/DataExpressionParserTest.java`: `shouldReturnInNodeWithFieldNodeCollectionForDynamicIn`, `shouldReturnInNodeWithFieldNodeCollectionForDynamicNotIn`, `shouldReturnInNodeWithInListNodeCollectionForStaticIn` — each asserts the AST structure via `parseInternal` or equivalent introspection
+- [X] T014 [P] [US1] Create `InCollectionTest` at `data-expression-parser-core/src/test/java/ru/zahaand/dataexpr/InCollectionTest.java` with `@Nested` group `EvaluateBoolean` containing: `shouldReturnTrueWhenFieldValueIsInStringCollection`, `shouldReturnFalseWhenFieldValueIsNotInStringCollection`, `shouldReturnTrueWhenFieldValueIsInNumericCollection`, `shouldReturnFalseWhenFieldValueIsNotInNumericCollection`, `shouldReturnTrueForNotInWhenValueAbsent`, `shouldReturnFalseForNotInWhenValuePresent`, `shouldHandleMixedTypeCollectionWithNoMatch`, `shouldReturnFalseWhenCollectionIsEmpty`
+- [X] T015 [P] [US1] Add `@Nested` group `EvaluateBooleanParameterized` to `InCollectionTest` with a single `@ParameterizedTest` `shouldEvaluateInCollectionExpression` + `@MethodSource` `Stream<Arguments>` covering positive and negative cases for both `IN` and `NOT IN` with string and numeric collections
+- [X] T016 [P] [US1] Add `@Nested` group `Errors` to `InCollectionTest`: `shouldThrowWhenCollectionFieldIsNotAList` (asserts `hasMessageContaining("must be a List for IN operator, got:")`), `shouldThrowWhenCollectionContainsUnsupportedElementType` (asserts both a non-scalar type and a `null` element via a parameterized test), `shouldThrowWhenCollectionFieldDoesNotExist` (asserts `hasMessageContaining("not found in context")`)
+- [X] T017 [US1] Add to existing `Parse` `@Nested` group in `data-expression-parser-core/src/test/java/ru/zahaand/dataexpr/DataExpressionParserTest.java`: `shouldReturnInNodeWithFieldNodeCollectionForDynamicIn`, `shouldReturnInNodeWithFieldNodeCollectionForDynamicNotIn`, `shouldReturnInNodeWithInListNodeCollectionForStaticIn` — each asserts the AST structure via `parseInternal` or equivalent introspection
 
 ### Test gate
 
-- [ ] T018 [US1] Run `mvn -q test -pl data-expression-parser-core` and confirm BUILD SUCCESS with test count ≥ 244 baseline + new tests; commit test changes as `test(core): add coverage for dynamic IN/NOT IN`
+- [X] T018 [US1] Run `mvn -q test -pl data-expression-parser-core` and confirm BUILD SUCCESS with test count ≥ 244 baseline + new tests; commit test changes as `test(core): add coverage for dynamic IN/NOT IN`
 
 ---
 
@@ -75,10 +75,10 @@ Single user story — **US1: Dynamic IN/NOT IN against context collection** — 
 
 **Goal**: Final cross-module build, documentation sanity, constitution gate re-check.
 
-- [ ] T019 Run `mvn -q verify` at repo root; confirm BUILD SUCCESS for both modules and both JARs produced
-- [ ] T020 [P] Confirm `data-expression-parser-spring-boot-starter/src/main/resources/META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports` is unchanged (no starter changes expected)
-- [ ] T021 [P] Review `EvaluatingVisitor` diff to confirm no orphaned code (Dev Standard #5): old `InNode.field` / `InNode.values` references are fully removed
-- [ ] T022 Mark all tasks `[X]` in this file and commit as `docs: mark all tasks complete in sprint 003`
+- [X] T019 Run `mvn -q verify` at repo root; confirm BUILD SUCCESS for both modules and both JARs produced
+- [X] T020 [P] Confirm `data-expression-parser-spring-boot-starter/src/main/resources/META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports` is unchanged (no starter changes expected)
+- [X] T021 [P] Review `EvaluatingVisitor` diff to confirm no orphaned code (Dev Standard #5): old `InNode.field` / `InNode.values` references are fully removed
+- [X] T022 Mark all tasks `[X]` in this file and commit as `docs: mark all tasks complete in sprint 003`
 
 ---
 
