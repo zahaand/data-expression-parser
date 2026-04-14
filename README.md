@@ -12,10 +12,10 @@ as a ready-to-use Spring bean.
 ![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.5-green?style=flat-square&logo=springboot)
 ![Maven](https://img.shields.io/badge/Build-Maven_Multi--Module-blue?style=flat-square&logo=apachemaven)
 ![Version](https://img.shields.io/badge/Version-1.2.0-brightgreen?style=flat-square)
-![Tests](https://img.shields.io/badge/Tests-269_passing-success?style=flat-square)
+![Tests](https://img.shields.io/badge/Tests-273_passing-success?style=flat-square)
 ![License](https://img.shields.io/badge/License-MIT-lightgrey?style=flat-square)
 
-269 tests | 3 sprints | Maven Multi-Module (core + starter)
+273 tests | 3 sprints | Maven Multi-Module (core + starter)
 
 ## Methodology
 
@@ -143,11 +143,18 @@ double total = parser.evaluateDouble(
 Parsing is expensive; evaluation is cheap. Parse the expression once and reuse the AST:
 
 ```java
+// Parse once
 Expression ast = parser.parse("[age] > 18 AND [status] == 'active'");
 
+// Evaluate many times against different contexts — no redundant parsing
 for (Map<String, Object> row : dataRows) {
     boolean passed = parser.evaluateBoolean(ast, EvaluationContext.of(row));
 }
+
+// All three result types are supported with pre-parsed AST
+boolean boolResult  = parser.evaluateBoolean(ast, ctx);
+double  dblResult   = parser.evaluateDouble(ast, ctx);
+EvaluationResult r  = parser.evaluate(ast, ctx);
 ```
 
 ### IN with a static list
@@ -310,10 +317,10 @@ var parser    = new DataExpressionParser(evaluator, registry);
 ![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.5-green?style=flat-square&logo=springboot)
 ![Maven](https://img.shields.io/badge/Build-Maven_Multi--Module-blue?style=flat-square&logo=apachemaven)
 ![Version](https://img.shields.io/badge/Version-1.2.0-brightgreen?style=flat-square)
-![Tests](https://img.shields.io/badge/Tests-269_passing-success?style=flat-square)
+![Tests](https://img.shields.io/badge/Tests-273_passing-success?style=flat-square)
 ![License](https://img.shields.io/badge/License-MIT-lightgrey?style=flat-square)
 
-269 тестов | 3 спринта | Maven Multi-Module (core + starter)
+273 тестов | 3 спринта | Maven Multi-Module (core + starter)
 
 ## Методология
 
@@ -441,11 +448,18 @@ double total = parser.evaluateDouble(
 Парсинг — дорогая операция; вычисление — дешёвая. Разберите выражение один раз и переиспользуйте AST:
 
 ```java
+// Парсинг один раз
 Expression ast = parser.parse("[age] > 18 AND [status] == 'active'");
 
+// Вычисление много раз с разными контекстами — без лишнего парсинга
 for (Map<String, Object> row : dataRows) {
     boolean passed = parser.evaluateBoolean(ast, EvaluationContext.of(row));
 }
+
+// Все три типа результата поддерживаются с предварительно разобранным AST
+boolean boolResult  = parser.evaluateBoolean(ast, ctx);
+double  dblResult   = parser.evaluateDouble(ast, ctx);
+EvaluationResult r  = parser.evaluate(ast, ctx);
 ```
 
 ### IN со статическим списком
