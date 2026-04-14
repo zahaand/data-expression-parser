@@ -4,6 +4,7 @@ import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import ru.zahaand.dataexpr.evaluator.ExpressionEvaluator;
+import ru.zahaand.dataexpr.function.CustomFunctionRegistry;
 import ru.zahaand.dataexpr.parser.DataExpressionParser;
 
 @AutoConfiguration
@@ -11,13 +12,20 @@ public class DataExpressionParserAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public ExpressionEvaluator expressionEvaluator() {
-        return new ExpressionEvaluator();
+    public CustomFunctionRegistry customFunctionRegistry() {
+        return CustomFunctionRegistry.empty();
     }
 
     @Bean
     @ConditionalOnMissingBean
-    public DataExpressionParser dataExpressionParser(ExpressionEvaluator evaluator) {
-        return new DataExpressionParser(evaluator);
+    public ExpressionEvaluator expressionEvaluator(CustomFunctionRegistry customFunctionRegistry) {
+        return new ExpressionEvaluator(customFunctionRegistry);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public DataExpressionParser dataExpressionParser(ExpressionEvaluator evaluator,
+                                                     CustomFunctionRegistry customFunctionRegistry) {
+        return new DataExpressionParser(evaluator, customFunctionRegistry);
     }
 }
