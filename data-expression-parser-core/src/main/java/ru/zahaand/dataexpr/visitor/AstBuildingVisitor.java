@@ -54,12 +54,17 @@ public final class AstBuildingVisitor extends DataExpressionBaseVisitor<Expressi
         Expression left = visit(additives.get(0));
 
         if (ctx.IN() != null) {
+            boolean negated = ctx.NOT() != null;
+            if (ctx.FIELD() != null) {
+                String raw = ctx.FIELD().getText();
+                String fieldName = raw.substring(1, raw.length() - 1);
+                return new InNode(left, new FieldNode(fieldName), negated);
+            }
             List<Expression> values = new ArrayList<>();
             for (DataExpressionParser.LiteralContext litCtx : ctx.valueList().literal()) {
                 values.add(visit(litCtx));
             }
-            boolean negated = ctx.NOT() != null;
-            return new InNode(left, values, negated);
+            return new InNode(left, new InListNode(values), negated);
         }
 
         if (additives.size() == 2) {

@@ -44,6 +44,8 @@ public final class EvaluatingVisitor {
             case LogicalNode node -> evaluateLogical(node);
             case NotNode node -> evaluateNot(node);
             case InNode node -> evaluateIn(node);
+            case InListNode node -> throw new ExpressionEvaluationException(
+                    "InListNode cannot be evaluated as a standalone expression");
         };
     }
 
@@ -244,18 +246,51 @@ public final class EvaluatingVisitor {
     }
 
     private EvaluationResult evaluateIn(InNode node) {
-        Object fieldValue = resolveValue(node.field());
-        List<Expression> valueExprs = node.values();
+        Object operandValue = resolveValue(node.operand());
+        boolean found = switch (node.collection()) {
+            case InListNode listNode -> matchStaticList(operandValue, listNode);
+            case FieldNode fieldNode -> matchDynamicCollection(operandValue, fieldNode);
+            default -> throw new ExpressionEvaluationException(
+                    "Unsupported IN collection type: " + node.collection().getClass().getSimpleName());
+        };
+        return new BooleanResult(node.negated() != found);
+    }
 
-        boolean found = false;
-        for (Expression valueExpr : valueExprs) {
+    private boolean matchStaticList(Object operandValue, InListNode listNode) {
+        for (Expression valueExpr : listNode.values()) {
             Object listValue = resolveValue(valueExpr);
-            if (isEqual(fieldValue, listValue)) {
-                found = true;
-                break;
+            if (isEqual(operandValue, listValue)) {
+                return true;
             }
         }
+        return false;
+    }
 
-        return new BooleanResult(node.negated() != found);
+    private boolean matchDynamicCollection(Object operandValue, FieldNode fieldNode) {
+        String fieldName = fieldNode.fieldName();
+        Object raw = context.get(fieldName);
+        if (raw == null) {
+            String msg = "Field '" + fieldName + "' not found in context";
+            log.error("IN operator error for field '{}': {}", fieldName, msg);
+            throw new ExpressionEvaluationException(msg);
+        }
+        if (!(raw instanceof List<?> list)) {
+            String msg = "Field '" + fieldName + "' must be a List for IN operator, got: " + raw.getClass().getSimpleName();
+            log.error("IN operator error for field '{}': {}", fieldName, msg);
+            throw new ExpressionEvaluationException(msg);
+        }
+        boolean found = false;
+        for (Object item : list) {
+            if (!(item instanceof Number) && !(item instanceof String) && !(item instanceof Boolean)) {
+                String typeName = item == null ? "null" : item.getClass().getSimpleName();
+                String msg = "Collection field '" + fieldName + "' contains unsupported element type: " + typeName;
+                log.error("IN operator error for field '{}': {}", fieldName, msg);
+                throw new ExpressionEvaluationException(msg);
+            }
+            if (!found && isEqual(operandValue, item)) {
+                found = true;
+            }
+        }
+        return found;
     }
 }

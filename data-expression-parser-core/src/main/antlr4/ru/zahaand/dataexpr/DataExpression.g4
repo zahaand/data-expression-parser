@@ -15,6 +15,8 @@ notExpr    : NOT notExpr
 comparison : additive ( ( '>=' | '<=' | '>' | '<' | '==' | '!=' ) additive )?
            | additive IN     '(' valueList ')'
            | additive NOT IN '(' valueList ')'
+           | additive IN     FIELD
+           | additive NOT IN FIELD
            ;
 
 valueList  : literal (',' literal)* ;
