@@ -152,6 +152,16 @@ case InNode node:
 Element comparison uses the existing `isEqual()` method — no changes needed there.
 Numeric coercion via `Number.doubleValue()` already applies through `isEqual()`.
 
+**Logging format (Constitution V — NON-NEGOTIABLE):**
+Before each `ExpressionEvaluationException` throw in the IN operator path,
+log at ERROR with the same message as the exception:
+
+```
+log.error("IN operator error for field '{}': {}", fieldName, exceptionMessage)
+```
+
+This ensures log content and exception message never drift.
+
 ## EvaluationContext Changes
 
 `EvaluationContext` MUST accept `List<Object>` as a valid field value.
@@ -168,8 +178,9 @@ by the `IN [field]` operator.
   `"Field '<name>' not found in context"`
 - The field referenced in `IN [field]` resolves to a non-`List` value:
   `"Field '<name>' must be a List for IN operator, got: <type>"`
-- The collection contains an element that is not `Number`, `String`, or `Boolean`:
-  `"Collection field '<name>' contains unsupported element type: <type>"`
+- The collection contains an element that is `null` or not `Number`, `String`, or `Boolean`:
+  `"Collection field '<name>' contains unsupported element type: null"` (for `null`)
+  or `"Collection field '<name>' contains unsupported element type: <type>"` (for unsupported type).
 
 ## Functional Requirements
 
@@ -192,6 +203,9 @@ by the `IN [field]` operator.
 - **FR-205**: If any element in the collection is not `Number`, `String`, or `Boolean`,
   `ExpressionEvaluationException` MUST be thrown with message:
   `"Collection field '<name>' contains unsupported element type: <type>"`.
+- **FR-205a**: A `null` element in the collection field MUST be treated as an
+  unsupported element type and throw `ExpressionEvaluationException` with message:
+  `"Collection field '<name>' contains unsupported element type: null"`.
 - **FR-206**: Static `IN ('a', 'b')` syntax MUST continue to work unchanged.
 - **FR-207**: `InNode` is refactored to use `operand` and `collection` fields.
   `InListNode` is introduced as the collection type for static lists.
@@ -202,6 +216,9 @@ by the `IN [field]` operator.
   value (non-null `Object`). No API change required.
 - **FR-210**: Logging: `EvaluatingVisitor` MUST log at ERROR before throwing
   `ExpressionEvaluationException` for collection-related errors (Constitution V).
+- **FR-210a**: The ERROR log message in the IN operator path MUST use the format:
+  `"IN operator error for field '<name>': <exception message>"`
+  so that log content and exception message are always consistent.
 
 ## Success Criteria
 
@@ -249,6 +266,12 @@ Add to existing `Parse` group:
 - `shouldReturnInNodeWithFieldNodeCollectionForDynamicNotIn`
 - `shouldReturnInNodeWithInListNodeCollectionForStaticIn` — verify static IN still produces `InListNode`
 
+## Edge Cases
+
+- Self-referential expressions (`[a] IN [a]` where `a = "active"`) are not
+  special-cased. The right-hand field is expected to be a `List`; if it resolves
+  to a non-`List` value, `ExpressionEvaluationException` is thrown per FR-204.
+
 ## Assumptions
 
 - `List<Object>` values in `EvaluationContext` are provided by the consumer before
@@ -256,6 +279,9 @@ Add to existing `Parse` group:
 - Nested lists (`List<List<...>>`) are not supported; elements must be scalar.
 - Empty collections (`List.of()`) are valid; `IN []` always returns `false`,
   `NOT IN []` always returns `true`.
+- Duplicate elements in the collection field are permitted and have no special
+  handling. The `isEqual()` check stops at the first match, so duplicates do not
+  affect the result.
 - The `InNode` record field rename (`field`→`operand`, `values`→`collection`) is an
   internal AST change. Since AST types are public records, consumers directly
   instantiating `InNode` will need to update — this is an acceptable breaking change

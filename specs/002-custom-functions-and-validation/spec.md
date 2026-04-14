@@ -106,8 +106,10 @@ separate context and assert the override is honored (`@ConditionalOnMissingBean`
 - What happens when a custom function reads a missing field via `context.get(...)`? →
   `EvaluationContext` throws `ExpressionEvaluationException` (same contract as v1.0.0).
 - What happens when the custom function registry name is registered with leading or
-  trailing whitespace? → The name is validated as non-blank; storage is lowercased via
-  `toLowerCase`. Consumers should pass trimmed names.
+  trailing whitespace? → Names with leading or trailing whitespace fail the regex check
+  `^[a-zA-Z_][a-zA-Z_0-9]*$` (whitespace is not a valid identifier character)
+  and are rejected with `IllegalArgumentException` at registration time.
+  Consumers do not need to trim names explicitly.
 
 ## Clarifications
 
@@ -483,9 +485,9 @@ only in the locations explicitly listed below.
 - `shouldEvaluateCustomFunctionWithArgs`
 - `shouldEvaluateCustomFunctionWithContextAccess` — function reads a field from
   `EvaluationContext`.
-- `shouldPreferCustomFunctionOverBuiltin` — registering a non-builtin name succeeds;
+- `shouldFallBackToBuiltinWhenCustomNotFound` — registering a non-builtin name succeeds;
   built-in names are blocked at registration (covered by `Registration` group).
-- `shouldThrowWhenCustomFunctionNotFound`
+- `shouldThrowWhenFunctionNotFoundInEitherRegistry`
 - `shouldWrapRuntimeExceptionFromCustomFunction` — function throws `RuntimeException`;
   evaluator rethrows `ExpressionEvaluationException` with the original as `cause` and
   message starting with `"Error in custom function '<name>': "`.
@@ -520,15 +522,5 @@ No existing v1.0.0 tests are modified.
 
 ### Acceptance Criteria (Consumer-Facing)
 
-1. `mvn compile` passes with no errors.
-2. `mvn test` passes all tests — the full v1.0.0 suite plus the new tests listed above.
-3. A consumer can define a `CustomFunctionRegistry` bean and use custom functions in
-   expressions: `TAX([price])` with `{price: 100.0}` returns `15.0`.
-4. A context-aware custom function `DISCOUNT([price])` reads `customer_tier` from
-   `EvaluationContext` and returns the correct discounted value
-   (`premium` → `*0.8`, otherwise `*0.95`).
-5. `validate("[age] > 18 AND [status] == 'active'")` returns `ValidationResult.valid()`.
-6. `validate("[age] >")` returns an invalid result whose `errorMessage()` is present and
-   contains line/column position.
-7. Registering a custom function named `"abs"` (any case) throws `IllegalArgumentException`
-   at build time, not at evaluation time.
+See SC-101–SC-108 in the Success Criteria section above.
+All acceptance criteria are covered by the measurable success criteria defined there.
