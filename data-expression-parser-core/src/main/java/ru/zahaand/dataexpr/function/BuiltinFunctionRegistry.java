@@ -4,7 +4,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.zahaand.dataexpr.exception.ExpressionEvaluationException;
 
+import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 
 public final class BuiltinFunctionRegistry {
@@ -26,8 +28,10 @@ public final class BuiltinFunctionRegistry {
             "pow", new FunctionDef(2, args -> Math.pow(args[0], args[1]))
     );
 
+    static final Set<String> BUILTIN_NAMES = Set.of("abs", "round", "floor", "ceil", "min", "max", "pow");
+
     public static double invoke(String name, double[] args) {
-        FunctionDef def = FUNCTIONS.get(name.toLowerCase());
+        FunctionDef def = FUNCTIONS.get(name.toLowerCase(Locale.ROOT));
         if (def == null) {
             log.error("Unknown function called: '{}'", name);
             throw new ExpressionEvaluationException("Unknown function: '" + name + "'");
