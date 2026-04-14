@@ -3,8 +3,6 @@ package ru.zahaand.dataexpr;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import ru.zahaand.dataexpr.exception.ExpressionEvaluationException;
@@ -13,7 +11,6 @@ import ru.zahaand.dataexpr.function.BuiltinFunctionRegistry;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@ExtendWith(MockitoExtension.class)
 class BuiltinFunctionRegistryTest {
 
     @Nested

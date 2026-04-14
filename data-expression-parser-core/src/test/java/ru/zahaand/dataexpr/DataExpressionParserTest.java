@@ -4,18 +4,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.mockito.junit.jupiter.MockitoExtension;
 import ru.zahaand.dataexpr.ast.*;
-import ru.zahaand.dataexpr.evaluator.BooleanResult;
-import ru.zahaand.dataexpr.evaluator.DoubleResult;
-import ru.zahaand.dataexpr.evaluator.EvaluationContext;
-import ru.zahaand.dataexpr.evaluator.EvaluationResult;
-import ru.zahaand.dataexpr.evaluator.ExpressionEvaluator;
+import ru.zahaand.dataexpr.evaluator.*;
 import ru.zahaand.dataexpr.exception.ExpressionEvaluationException;
 import ru.zahaand.dataexpr.exception.ExpressionParseException;
 import ru.zahaand.dataexpr.function.CustomFunctionRegistry;
@@ -23,15 +17,11 @@ import ru.zahaand.dataexpr.parser.DataExpressionParser;
 import ru.zahaand.dataexpr.parser.ValidationResult;
 
 import java.math.BigDecimal;
-import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.assertj.core.api.Assertions.within;
+import static org.assertj.core.api.Assertions.*;
 
-@ExtendWith(MockitoExtension.class)
 class DataExpressionParserTest {
 
     private DataExpressionParser parser;
