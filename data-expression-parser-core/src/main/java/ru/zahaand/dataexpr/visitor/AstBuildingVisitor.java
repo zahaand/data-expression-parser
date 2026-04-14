@@ -1,6 +1,8 @@
 package ru.zahaand.dataexpr.visitor;
 
 import org.antlr.v4.runtime.Token;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import ru.zahaand.dataexpr.DataExpressionBaseVisitor;
 import ru.zahaand.dataexpr.DataExpressionParser;
 import ru.zahaand.dataexpr.ast.*;
@@ -9,6 +11,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class AstBuildingVisitor extends DataExpressionBaseVisitor<Expression> {
+
+    private static final Logger log = LoggerFactory.getLogger(AstBuildingVisitor.class);
 
     @Override
     public Expression visitProg(DataExpressionParser.ProgContext ctx) {
@@ -85,7 +89,10 @@ public final class AstBuildingVisitor extends DataExpressionBaseVisitor<Expressi
             case "<=" -> ComparisonOperator.LTE;
             case "==" -> ComparisonOperator.EQ;
             case "!=" -> ComparisonOperator.NEQ;
-            default -> throw new IllegalStateException("Unknown comparison operator: " + opToken.getText());
+            default -> {
+                log.error("Unexpected grammar state: {}", ctx.getText());
+                throw new IllegalStateException("Unknown comparison operator: " + opToken.getText());
+            }
         };
     }
 
@@ -113,7 +120,10 @@ public final class AstBuildingVisitor extends DataExpressionBaseVisitor<Expressi
                 case "*" -> ArithmeticOperator.MULTIPLY;
                 case "/" -> ArithmeticOperator.DIVIDE;
                 case "%" -> ArithmeticOperator.MODULO;
-                default -> throw new IllegalStateException("Unknown multiplicative operator: " + opToken.getText());
+                default -> {
+                    log.error("Unexpected grammar state: {}", ctx.getText());
+                    throw new IllegalStateException("Unknown multiplicative operator: " + opToken.getText());
+                }
             };
             result = new BinaryOpNode(result, op, visit(children.get(i)));
         }
@@ -179,6 +189,7 @@ public final class AstBuildingVisitor extends DataExpressionBaseVisitor<Expressi
         if (ctx.FALSE() != null) {
             return new BooleanNode(false);
         }
+        log.error("Unexpected grammar state: {}", ctx.getText());
         throw new IllegalStateException("Unknown literal type");
     }
 }

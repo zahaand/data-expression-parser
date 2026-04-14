@@ -86,6 +86,7 @@ public final class DataExpressionParser {
      */
     public ValidationResult validate(String expression) {
         if (StringUtils.isBlank(expression)) {
+            log.error("validate() called with null or blank expression");
             throw new ExpressionParseException(
                     expression == null ? "Expression must not be null" : "Expression must not be blank");
         }
@@ -189,7 +190,7 @@ public final class DataExpressionParser {
         }
         log.error("Expected boolean result but got {} for expression: {}", result.getClass().getSimpleName(), expression);
         throw new ExpressionEvaluationException(
-                "Expected boolean result but got double result");
+                "Expected boolean result but got: " + result.getClass().getSimpleName());
     }
 
     /**
@@ -211,7 +212,7 @@ public final class DataExpressionParser {
         }
         log.error("Expected double result but got {} for expression: {}", result.getClass().getSimpleName(), expression);
         throw new ExpressionEvaluationException(
-                "Expected double result but got boolean result");
+                "Expected double result but got: " + result.getClass().getSimpleName());
     }
 
     /**
@@ -281,6 +282,7 @@ public final class DataExpressionParser {
         public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol,
                                 int line, int charPositionInLine, String msg,
                                 RecognitionException e) {
+            log.error("Parse error at {}:{} — {}", line, charPositionInLine, msg);
             throw new ExpressionParseException(
                     "Parse error at line " + line + ":" + charPositionInLine + ": " + msg);
         }

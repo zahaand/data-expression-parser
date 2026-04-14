@@ -33,8 +33,11 @@ public final class EvaluatingVisitor {
     public EvaluationResult evaluate(Expression expression) {
         return switch (expression) {
             case NumberNode node -> new DoubleResult(node.value());
-            case StringNode node -> throw new ExpressionEvaluationException(
-                    "Cannot evaluate string literal '" + node.value() + "' as a standalone result");
+            case StringNode node -> {
+                log.error("StringNode used as standalone result — not supported");
+                throw new ExpressionEvaluationException(
+                        "Cannot evaluate string literal '" + node.value() + "' as a standalone result");
+            }
             case BooleanNode node -> new BooleanResult(node.value());
             case FieldNode node -> evaluateField(node);
             case BinaryOpNode node -> evaluateBinaryOp(node);
@@ -44,8 +47,11 @@ public final class EvaluatingVisitor {
             case LogicalNode node -> evaluateLogical(node);
             case NotNode node -> evaluateNot(node);
             case InNode node -> evaluateIn(node);
-            case InListNode node -> throw new ExpressionEvaluationException(
-                    "InListNode cannot be evaluated as a standalone expression");
+            case InListNode node -> {
+                log.error("Unexpected collection type in IN node: {}", node.getClass().getSimpleName());
+                throw new ExpressionEvaluationException(
+                        "InListNode cannot be evaluated as a standalone expression");
+            }
         };
     }
 
@@ -60,6 +66,7 @@ public final class EvaluatingVisitor {
         if (value instanceof Boolean b) {
             return new BooleanResult(b);
         }
+        log.error("Cannot use value of type {} in arithmetic context", value.getClass().getSimpleName());
         throw new ExpressionEvaluationException(
                 "Unsupported field value type: " + value.getClass().getName());
     }
@@ -169,7 +176,10 @@ public final class EvaluatingVisitor {
                     case LT -> leftNum < rightNum;
                     case GTE -> leftNum >= rightNum;
                     case LTE -> leftNum <= rightNum;
-                    default -> throw new IllegalStateException();
+                    default -> {
+                        log.error("Unhandled operator in switch: {}", node.op());
+                        throw new IllegalStateException();
+                    }
                 });
             }
         };
@@ -195,6 +205,7 @@ public final class EvaluatingVisitor {
         if (result instanceof BooleanResult br) {
             return br.value();
         }
+        log.error("Unexpected expression type in resolveValue: {}", expr.getClass().getSimpleName());
         throw new ExpressionEvaluationException("Unexpected evaluation result");
     }
 
@@ -241,6 +252,7 @@ public final class EvaluatingVisitor {
         if (result instanceof BooleanResult br) {
             return br.value();
         }
+        log.error("Expected boolean result in logical context, got: {}", result.getClass().getSimpleName());
         throw new ExpressionEvaluationException(
                 "Expected boolean value in logical context");
     }
@@ -250,8 +262,11 @@ public final class EvaluatingVisitor {
         boolean found = switch (node.collection()) {
             case InListNode listNode -> matchStaticList(operandValue, listNode);
             case FieldNode fieldNode -> matchDynamicCollection(operandValue, fieldNode);
-            default -> throw new ExpressionEvaluationException(
-                    "Unsupported IN collection type: " + node.collection().getClass().getSimpleName());
+            default -> {
+                log.error("Unhandled collection type in switch: {}", node.collection().getClass().getSimpleName());
+                throw new ExpressionEvaluationException(
+                        "Unsupported IN collection type: " + node.collection().getClass().getSimpleName());
+            }
         };
         return new BooleanResult(node.negated() != found);
     }

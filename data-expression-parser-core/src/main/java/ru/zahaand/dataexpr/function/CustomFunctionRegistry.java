@@ -76,6 +76,11 @@ public final class CustomFunctionRegistry {
     /**
      * Looks up a custom function by name (case-insensitive).
      *
+     * <p><strong>Internal API.</strong> This method is public only because it is
+     * called from {@link ru.zahaand.dataexpr.visitor.EvaluatingVisitor}, which
+     * resides in a different package. It is not intended for consumer use and
+     * may change or be removed without notice.
+     *
      * @param name the function name to look up; must not be {@code null}
      * @return the registered {@link ExpressionFunction}, or {@code null} if not found
      */

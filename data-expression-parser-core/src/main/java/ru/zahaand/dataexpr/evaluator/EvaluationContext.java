@@ -1,5 +1,7 @@
 package ru.zahaand.dataexpr.evaluator;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import ru.zahaand.dataexpr.exception.ExpressionEvaluationException;
 
 import java.util.Map;
@@ -18,6 +20,8 @@ import java.util.Map;
  * construction time throws {@link ExpressionEvaluationException}.
  */
 public final class EvaluationContext {
+
+    private static final Logger log = LoggerFactory.getLogger(EvaluationContext.class);
 
     private final Map<String, Object> fields;
 
@@ -46,6 +50,7 @@ public final class EvaluationContext {
      */
     public static EvaluationContext of(String name, Object value) {
         if (value == null) {
+            log.error("Null value rejected for field: '{}'", name);
             throw new ExpressionEvaluationException(
                     "Field value must not be null for field: '" + name + "'");
         }
@@ -65,6 +70,7 @@ public final class EvaluationContext {
     public static EvaluationContext of(Map<String, Object> fields) {
         for (Map.Entry<String, Object> entry : fields.entrySet()) {
             if (entry.getValue() == null) {
+                log.error("Null value rejected for field: '{}'", entry.getKey());
                 throw new ExpressionEvaluationException(
                         "Field value must not be null for field: '" + entry.getKey() + "'");
             }
@@ -82,6 +88,7 @@ public final class EvaluationContext {
     public Object get(String fieldName) {
         Object value = fields.get(fieldName);
         if (value == null && !fields.containsKey(fieldName)) {
+            log.error("Field '{}' not found in evaluation context", fieldName);
             throw new ExpressionEvaluationException(
                     "Unknown field: '" + fieldName + "'");
         }

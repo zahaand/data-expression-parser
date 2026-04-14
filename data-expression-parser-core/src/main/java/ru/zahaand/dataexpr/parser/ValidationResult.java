@@ -1,6 +1,8 @@
 package ru.zahaand.dataexpr.parser;
 
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
 
@@ -15,6 +17,8 @@ import java.util.Optional;
  * or fields are syntactically valid and return {@link #valid()}.
  */
 public final class ValidationResult {
+
+    private static final Logger log = LoggerFactory.getLogger(ValidationResult.class);
 
     private static final ValidationResult VALID = new ValidationResult(true, null);
 
@@ -45,6 +49,7 @@ public final class ValidationResult {
      */
     public static ValidationResult invalid(String errorMessage) {
         if (StringUtils.isBlank(errorMessage)) {
+            log.error("ValidationResult.invalid() called with null or blank message");
             throw new IllegalArgumentException("Error message must not be null or blank");
         }
         return new ValidationResult(false, errorMessage);
