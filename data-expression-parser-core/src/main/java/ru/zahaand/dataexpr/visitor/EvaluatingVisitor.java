@@ -268,8 +268,10 @@ public final class EvaluatingVisitor {
 
     private boolean matchDynamicCollection(Object operandValue, FieldNode fieldNode) {
         String fieldName = fieldNode.fieldName();
-        Object raw = context.get(fieldName);
-        if (raw == null) {
+        Object raw;
+        try {
+            raw = context.get(fieldName);
+        } catch (ExpressionEvaluationException ex) {
             String msg = "Field '" + fieldName + "' not found in context";
             log.error("IN operator error for field '{}': {}", fieldName, msg);
             throw new ExpressionEvaluationException(msg);
