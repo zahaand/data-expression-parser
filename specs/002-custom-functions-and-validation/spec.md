@@ -192,6 +192,9 @@ separate context and assert the override is honored (`@ConditionalOnMissingBean`
   names or field existence.
 - **FR-113**: `ValidationResult.errorMessage()` MUST return `Optional.empty()` when
   `isValid()` is `true`, and a present `Optional<String>` otherwise.
+- **FR-113a**: `ValidationResult.invalid(String)` MUST throw `IllegalArgumentException`
+  if the provided message is null or blank. This structurally enforces the
+  "present Optional when invalid" invariant.
 - **FR-114**: The starter MUST auto-configure an empty `CustomFunctionRegistry` bean
   with `@ConditionalOnMissingBean`, and inject it into the autoconfigured
   `DataExpressionParser`.
@@ -206,6 +209,9 @@ separate context and assert the override is honored (`@ConditionalOnMissingBean`
   When `validate()` returns `ValidationResult.invalid(...)`, the library MUST log the
   error at `DEBUG`. No SLF4J binding is declared — consumers supply their own binding
   (existing v1.0.0 consumer expectation).
+- **FR-117a**: `CustomFunctionRegistry.Builder.register()` MUST log at ERROR level
+  before throwing `IllegalArgumentException` for any validation failure
+  (Constitution V — NON-NEGOTIABLE).
 
 ### Key Entities
 
@@ -300,6 +306,7 @@ public final class CustomFunctionRegistry {
     public static Builder builder() { ... }
 
     // Returns null if name not registered; caller falls back to BuiltinFunctionRegistry.
+    // Lookup implementation: map.get(name.toLowerCase(Locale.ROOT))
     public ExpressionFunction find(String name) { ... }
 
     public static final class Builder {
@@ -322,6 +329,11 @@ public final class CustomFunctionRegistry {
 - Conflict check reads the built-in name set from `BuiltinFunctionRegistry` (or a
   package-visible accessor). Check MUST occur at `register()` time, not at `build()` or
   evaluation time.
+- Logger: `private static final Logger log = LoggerFactory.getLogger(CustomFunctionRegistry.class)`
+  must be declared on the outer class.
+  `Builder.register()` MUST log at ERROR level before throwing any `IllegalArgumentException`:
+  `log.error("Custom function registration failed for name '{}': {}", name, exceptionMessage)`
+  (Constitution Principle V — NON-NEGOTIABLE).
 
 #### `ru.zahaand.dataexpr.parser.ValidationResult`
 
@@ -342,6 +354,9 @@ public final class ValidationResult {
 
 - Final, immutable.
 - `valid()` and `invalid(...)` are the only construction paths.
+- `invalid(String errorMessage)` MUST throw `IllegalArgumentException` if `errorMessage`
+  is null or blank. This enforces FR-113: invalid results always carry a non-blank
+  message, guaranteeing `errorMessage()` returns a present `Optional<String>`.
 
 ---
 
@@ -414,6 +429,18 @@ public DataExpressionParser dataExpressionParser(ExpressionEvaluator evaluator,
 
 - The `ExpressionEvaluator` bean definition from v1.0.0 remains unchanged.
 - Both new / updated beans use `@ConditionalOnMissingBean` so consumers can override.
+
+---
+
+### Case-Insensitivity Convention
+
+All `toLowerCase()` operations in this feature MUST use `Locale.ROOT`:
+- `CustomFunctionRegistry.Builder.register()` — stores name as `name.toLowerCase(Locale.ROOT)`
+- `CustomFunctionRegistry.find()` — looks up as `name.toLowerCase(Locale.ROOT)`
+- `EvaluatingVisitor` function-call resolution — normalizes as `name.toLowerCase(Locale.ROOT)`
+
+Using `Locale.ROOT` prevents locale-sensitive downcasing bugs
+(e.g. Turkish locale `"I"` → `"ı"` instead of `"i"`).
 
 ---
 
